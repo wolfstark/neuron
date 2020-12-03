@@ -3,7 +3,8 @@ import React, { useState, useCallback, useMemo } from "react";
 import "./App.css";
 // import { Button, TextField } from "@material-ui/core";
 import { Responsive, WidthProvider } from "react-grid-layout";
-
+import styled from "styled-components";
+import lodash from "lodash";
 import { Slate, Editable, withReact } from "slate-react";
 import {
 	Node,
@@ -13,6 +14,7 @@ import {
 	Point,
 	createEditor,
 	Element as SlateElement,
+	Text,
 } from "slate";
 import { withHistory } from "slate-history";
 
@@ -68,6 +70,10 @@ const SHORTCUTS = {
 };
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+const P = styled.p`
+	font-size: 16px;
+	text-align: center;
+`;
 
 const withShortcuts = (editor) => {
 	const { deleteBackward, insertText } = editor;
@@ -175,46 +181,130 @@ const Element = ({ attributes, children, element }) => {
 			return <h6 {...attributes}>{children}</h6>;
 		case "list-item":
 			return <li {...attributes}>{children}</li>;
+		case "code":
+			return <code {...attributes}>{children}</code>;
 		default:
-			return <p {...attributes}>{children}</p>;
+			return <P {...attributes}>{children}</P>;
 	}
+};
+
+const Leaf = (props) => {
+	return (
+		<span
+			{...props.attributes}
+			style={{ fontWeight: props.leaf.bold ? "bold" : "normal" }}
+		>
+			{props.children}
+		</span>
+	);
+};
+
+const CustomEditor = {
+	isBoldMarkActive(editor) {
+		const [match] = Editor.nodes(editor, {
+			match: (n) => n.bold === true,
+			universal: true,
+		});
+
+		return !!match;
+	},
+
+	isCodeBlockActive(editor) {
+		const [match] = Editor.nodes(editor, {
+			match: (n) => n.type === "code",
+		});
+
+		return !!match;
+	},
+
+	toggleBoldMark(editor) {
+		const isActive = CustomEditor.isBoldMarkActive(editor);
+		Transforms.setNodes(
+			editor,
+			{ bold: isActive ? null : true },
+			{ match: (n) => Text.isText(n), split: true }
+		);
+	},
+
+	toggleCodeBlock(editor) {
+		const isActive = CustomEditor.isCodeBlockActive(editor);
+		Transforms.setNodes(
+			editor,
+			{ type: isActive ? null : "code" },
+			{ match: (n) => Editor.isBlock(editor, n) }
+		);
+	},
 };
 
 function App() {
 	// const layouts = getLayoutsFromSomewhere();
-	const [value, setValue] = useState<Node[]>(initialValue);
+	const [value, setValue] = useState<Node[]>(
+		JSON.parse(localStorage.getItem("content")) || [
+			{
+				type: "paragraph",
+				children: [{ text: "A line of text in a paragraph." }],
+			},
+		]
+	);
 	const renderElement = useCallback((props) => <Element {...props} />, []);
+	const renderLeaf = useCallback((props) => {
+		return <Leaf {...props} />;
+	}, []);
 	const editor = useMemo(
 		() => withShortcuts(withReact(withHistory(createEditor()))),
 		[]
 	);
-	// const [value, setValue] = useState(initialState);
-	// const onChange = ({ value }) => {
-	// 	setValue({ value });
-	// };
 
 	return (
 		<div className="App">
-			{/* <ResponsiveGridLayout
-				// width=""
-				className="layout"
-				// layouts={layouts}
-				breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-				cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-			> */}
 			<Slate
 				editor={editor}
 				value={value}
-				onChange={(value) => setValue(value)}
+				onChange={(value) => {
+					setValue(value);
+					const content = JSON.stringify(value);
+					localStorage.setItem("content", content);
+				}}
 			>
+				<ResponsiveGridLayout
+					// width=""
+					className="layout"
+					// layouts={layouts}
+					breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+					cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+				>
+					<div key="1">3</div>
+					<div key="2">3</div>
+				</ResponsiveGridLayout>
+				<div>eqwewwq</div>
 				<Editable
 					renderElement={renderElement}
+					renderLeaf={renderLeaf}
 					placeholder="Write some markdown..."
 					spellCheck={false}
+					onKeyDown={(event) => {
+						if (!event.ctrlKey) {
+							return;
+						}
+
+						// Replace the `onKeyDown` logic with our new commands.
+						switch (event.key) {
+							case "`": {
+								event.preventDefault();
+								CustomEditor.toggleCodeBlock(editor);
+								break;
+							}
+
+							case "b": {
+								event.preventDefault();
+								CustomEditor.toggleBoldMark(editor);
+								break;
+							}
+						}
+					}}
 					autoFocus
 				/>
 			</Slate>
-			{/* </ResponsiveGridLayout> */}
 		</div>
 	);
 }
