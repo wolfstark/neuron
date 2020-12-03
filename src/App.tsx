@@ -17,6 +17,41 @@ import {
 	Text,
 } from "slate";
 import { withHistory } from "slate-history";
+import {
+	EditablePlugins,
+	pipe,
+	withDeserializeHTML,
+	withDeserializeMd,
+	SoftBreakPlugin,
+	withAutoformat,
+	BalloonToolbar,
+	withNodeID,
+	BoldPlugin,
+	ItalicPlugin,
+	UnderlinePlugin,
+	CodeBlockPlugin,
+	HighlightPlugin,
+	StrikethroughPlugin,
+	ParagraphPlugin,
+	BlockquotePlugin,
+	HeadingPlugin,
+	CodePlugin,
+	ImagePlugin,
+	LinkPlugin,
+	ListPlugin,
+	MediaEmbedPlugin,
+	MentionPlugin,
+	TablePlugin,
+} from "@udecode/slate-plugins";
+
+// TODO:NormalizeTypes,TrailingNode,SerializeHtml
+
+const plugins = [
+	ParagraphPlugin(),
+	BoldPlugin(),
+	ItalicPlugin(),
+	UnderlinePlugin(),
+];
 
 const initialValue = [
 	{
@@ -80,7 +115,7 @@ const withShortcuts = (editor) => {
 
 	editor.insertText = (text) => {
 		const { selection } = editor;
-
+		// debugger;
 		if (text === " " && selection && Range.isCollapsed(selection)) {
 			const { anchor } = selection;
 			const block = Editor.above(editor, {
@@ -167,6 +202,8 @@ const Element = ({ attributes, children, element }) => {
 			return <blockquote {...attributes}>{children}</blockquote>;
 		case "bulleted-list":
 			return <ul {...attributes}>{children}</ul>;
+		case "list-item":
+			return <li {...attributes}>{children}</li>;
 		case "heading-one":
 			return <h1 {...attributes}>{children}</h1>;
 		case "heading-two":
@@ -179,8 +216,6 @@ const Element = ({ attributes, children, element }) => {
 			return <h5 {...attributes}>{children}</h5>;
 		case "heading-six":
 			return <h6 {...attributes}>{children}</h6>;
-		case "list-item":
-			return <li {...attributes}>{children}</li>;
 		case "code":
 			return <code {...attributes}>{children}</code>;
 		default:
@@ -236,24 +271,20 @@ const CustomEditor = {
 	},
 };
 
+const withPlugins = [withReact, withHistory] as const;
+// const withPlugins = [withShortcuts, withReact, withHistory] as const;
+
 function App() {
 	// const layouts = getLayoutsFromSomewhere();
 	const [value, setValue] = useState<Node[]>(
-		JSON.parse(localStorage.getItem("content")) || [
-			{
-				type: "paragraph",
-				children: [{ text: "A line of text in a paragraph." }],
-			},
-		]
+		JSON.parse(localStorage.getItem("content")) || initialValue
 	);
 	const renderElement = useCallback((props) => <Element {...props} />, []);
 	const renderLeaf = useCallback((props) => {
 		return <Leaf {...props} />;
 	}, []);
-	const editor = useMemo(
-		() => withShortcuts(withReact(withHistory(createEditor()))),
-		[]
-	);
+
+	const editor = useMemo(() => pipe(createEditor(), ...withPlugins), []);
 
 	return (
 		<div className="App">
@@ -266,7 +297,7 @@ function App() {
 					localStorage.setItem("content", content);
 				}}
 			>
-				<ResponsiveGridLayout
+				{/* <ResponsiveGridLayout
 					// width=""
 					className="layout"
 					// layouts={layouts}
@@ -276,8 +307,9 @@ function App() {
 					<div key="1">3</div>
 					<div key="2">3</div>
 				</ResponsiveGridLayout>
-				<div>eqwewwq</div>
-				<Editable
+				<div>eqwewwq</div> */}
+				<EditablePlugins plugins={plugins} placeholder="Enter some text..." />
+				{/* <Editable
 					renderElement={renderElement}
 					renderLeaf={renderLeaf}
 					placeholder="Write some markdown..."
@@ -303,7 +335,7 @@ function App() {
 						}
 					}}
 					autoFocus
-				/>
+				/> */}
 			</Slate>
 		</div>
 	);
