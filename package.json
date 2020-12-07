@@ -2,7 +2,14 @@
 	"name": "neuron",
 	"version": "0.1.0",
 	"private": true,
-	"main": "main/electron.js",
+	"main": "public/electron.js",
+	"homepage": "./",
+	"build": {
+		"appId": "com.electron.electron-with-create-react-app",
+		"directories": {
+			"buildResources": "public"
+		}
+	},
 	"dependencies": {
 		"@material-ui/core": "^4.11.1",
 		"@material-ui/icons": "^4.9.1",
@@ -22,6 +29,7 @@
 		"react-dom": "^17.0.1",
 		"react-grid-layout": "^1.2.0",
 		"react-scripts": "4.0.1",
+		"robotjs": "^0.6.0",
 		"slate": "^0.59.0",
 		"slate-history": "^0.59.0",
 		"slate-hyperscript": "^0.59.0",
@@ -32,15 +40,17 @@
 		"web-vitals": "^0.2.4"
 	},
 	"scripts": {
-		"start": "concurrently \"yarn react-start\" \"wait-on http://localhost:3002 && electron .\"",
+		"start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3002 && electron .\"",
 		"analyze": "source-map-explorer 'build/static/js/*.js'",
 		"react-start": "react-app-rewired start",
 		"react-build": "react-scripts build",
 		"react-test": "react-scripts test",
 		"react-eject": "react-scripts eject",
 		"electron-build": "electron-builder",
-		"release": "yarn react-build && electron-builder --publish=always",
-		"build": "yarn react-build && yarn electron-build"
+		"release": "npm run react-build && electron-builder --publish=always",
+		"build": "npm run react-build && npm run electron-build",
+		"elev": "electron -v && electron -a",
+		"rebuild": "npm rebuild --runtime=electron --target=11.0.3 --disturl=https://atom.io/download/atom-shell --abi=85"
 	},
 	"eslintConfig": {
 		"extends": [

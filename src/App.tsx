@@ -5,6 +5,9 @@ import "./App.css";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import styled from "styled-components";
 import lodash from "lodash";
+import DragIndicatorIcon from "@material-ui/icons/DragIndicator";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { Slate, Editable, withReact } from "slate-react";
 import {
 	Node,
@@ -42,197 +45,52 @@ import {
 	MediaEmbedPlugin,
 	MentionPlugin,
 	TablePlugin,
+	getSelectableElement,
+	withTable,
+	withLink,
+	withInlineVoid,
+	withList,
+	withMarks,
+	withImageUpload,
+	withNormalizeTypes,
+	withTrailingNode,
+	TodoListPlugin,
+	ResetBlockTypePlugin,
+	ExitBreakPlugin,
+	useMention,
+	MentionSelect,
+	ToolbarMark,
+	MARK_BOLD,
+	MARK_ITALIC,
+	MARK_UNDERLINE,
 } from "@udecode/slate-plugins";
+import {
+	initialValueBasicMarks,
+	initialValueForcedLayout,
+	initialValueHighlight,
+	initialValueBasicElements,
+	initialValueList,
+	initialValueTables,
+	initialValueLinks,
+	initialValueMentions,
+	initialValueImages,
+	initialValueEmbeds,
+	initialValueAutoformat,
+	initialValueSoftBreak,
+	initialValueExitBreak,
+	initialValuePasteHtml,
+	options as defaultOptions,
+	optionsResetBlockTypes,
+	headingTypes,
+} from "./initialValues";
+import { autoformatRules } from "./autoformatRules";
+import { MENTIONABLES } from "./mentionables";
+import { FormatBold, FormatItalic, FormatUnderlined } from "@material-ui/icons";
 
+// console.log(options.h1);
 // TODO:NormalizeTypes,TrailingNode,SerializeHtml
 
-const plugins = [
-	ParagraphPlugin(),
-	BoldPlugin(),
-	ItalicPlugin(),
-	UnderlinePlugin(),
-];
-
-const initialValue = [
-	{
-		type: "paragraph",
-		children: [
-			{
-				text:
-					"Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi doloremque tempore, enim officiis molestias veniam eaque saepe harum, rem repellendus beatae quas inventore nisi animi maxime, corrupti numquam quam perspiciatis!",
-			},
-		],
-	},
-	// {
-	// 	type: "block-quote",
-	// 	children: [{ text: "A wise quote." }],
-	// },
-	// {
-	// 	type: "paragraph",
-	// 	children: [
-	// 		{
-	// 			text:
-	// 				'Order when you start a line with "## " you get a level-two heading, like this:',
-	// 		},
-	// 	],
-	// },
-	// {
-	// 	type: "heading-two",
-	// 	children: [{ text: "Try it out!" }],
-	// },
-	// {
-	// 	type: "paragraph",
-	// 	children: [
-	// 		{
-	// 			text:
-	// 				'Try it out for yourself! Try starting a new line with ">", "-", or "#"s.',
-	// 		},
-	// 	],
-	// },
-];
-
-const SHORTCUTS = {
-	"*": "list-item",
-	"-": "list-item",
-	"+": "list-item",
-	">": "block-quote",
-	"#": "heading-one",
-	"##": "heading-two",
-	"###": "heading-three",
-	"####": "heading-four",
-	"#####": "heading-five",
-	"######": "heading-six",
-};
-
 const ResponsiveGridLayout = WidthProvider(Responsive);
-const P = styled.p`
-	font-size: 16px;
-	text-align: center;
-`;
-
-const withShortcuts = (editor) => {
-	const { deleteBackward, insertText } = editor;
-
-	editor.insertText = (text) => {
-		const { selection } = editor;
-		// debugger;
-		if (text === " " && selection && Range.isCollapsed(selection)) {
-			const { anchor } = selection;
-			const block = Editor.above(editor, {
-				match: (n) => Editor.isBlock(editor, n),
-			});
-			const path = block ? block[1] : [];
-			const start = Editor.start(editor, path);
-			const range = { anchor, focus: start };
-			const beforeText = Editor.string(editor, range);
-			const type = SHORTCUTS[beforeText];
-
-			if (type) {
-				Transforms.select(editor, range);
-				Transforms.delete(editor);
-				const newProperties: Partial<SlateElement> = {
-					type,
-				};
-				Transforms.setNodes(editor, newProperties, {
-					match: (n) => Editor.isBlock(editor, n),
-				});
-
-				if (type === "list-item") {
-					const list = { type: "bulleted-list", children: [] };
-					Transforms.wrapNodes(editor, list, {
-						match: (n) =>
-							!Editor.isEditor(n) &&
-							SlateElement.isElement(n) &&
-							n.type === "list-item",
-					});
-				}
-
-				return;
-			}
-		}
-
-		insertText(text);
-	};
-	editor.deleteBackward = (...args) => {
-		const { selection } = editor;
-
-		if (selection && Range.isCollapsed(selection)) {
-			const match = Editor.above(editor, {
-				match: (n) => Editor.isBlock(editor, n),
-			});
-
-			if (match) {
-				const [block, path] = match;
-				const start = Editor.start(editor, path);
-
-				if (
-					!Editor.isEditor(block) &&
-					SlateElement.isElement(block) &&
-					block.type !== "paragraph" &&
-					Point.equals(selection.anchor, start)
-				) {
-					const newProperties: Partial<SlateElement> = {
-						type: "paragraph",
-					};
-					Transforms.setNodes(editor, newProperties);
-
-					if (block.type === "list-item") {
-						Transforms.unwrapNodes(editor, {
-							match: (n) =>
-								!Editor.isEditor(n) &&
-								SlateElement.isElement(n) &&
-								n.type === "bulleted-list",
-							split: true,
-						});
-					}
-
-					return;
-				}
-			}
-
-			deleteBackward(...args);
-		}
-	};
-
-	return editor;
-};
-const Element = ({ attributes, children, element }) => {
-	switch (element.type) {
-		case "block-quote":
-			return <blockquote {...attributes}>{children}</blockquote>;
-		case "bulleted-list":
-			return <ul {...attributes}>{children}</ul>;
-		case "list-item":
-			return <li {...attributes}>{children}</li>;
-		case "heading-one":
-			return <h1 {...attributes}>{children}</h1>;
-		case "heading-two":
-			return <h2 {...attributes}>{children}</h2>;
-		case "heading-three":
-			return <h3 {...attributes}>{children}</h3>;
-		case "heading-four":
-			return <h4 {...attributes}>{children}</h4>;
-		case "heading-five":
-			return <h5 {...attributes}>{children}</h5>;
-		case "heading-six":
-			return <h6 {...attributes}>{children}</h6>;
-		case "code":
-			return <code {...attributes}>{children}</code>;
-		default:
-			return <P {...attributes}>{children}</P>;
-	}
-};
-
-const Leaf = (props) => {
-	return (
-		<span
-			{...props.attributes}
-			style={{ fontWeight: props.leaf.bold ? "bold" : "normal" }}
-		>
-			{props.children}
-		</span>
-	);
-};
 
 const CustomEditor = {
 	isBoldMarkActive(editor) {
@@ -270,34 +128,212 @@ const CustomEditor = {
 		);
 	},
 };
+const draggableComponentOptions = [
+	{ ...defaultOptions.p, level: 1 },
+	defaultOptions.blockquote,
+	defaultOptions.todo_li,
+	defaultOptions.h1,
+	defaultOptions.h2,
+	defaultOptions.h3,
+	defaultOptions.h4,
+	defaultOptions.h5,
+	defaultOptions.h6,
+	defaultOptions.img,
+	defaultOptions.link,
+	defaultOptions.ol,
+	defaultOptions.ul,
+	defaultOptions.table,
+	defaultOptions.media_embed,
+	defaultOptions.code_block,
+].map(
+	({
+		type,
+		level,
+		component,
+		...options
+	}: {
+		type: string;
+		level?: number;
+		component: any;
+	}) => [
+		type,
+		{
+			...options,
+			component: getSelectableElement({
+				component,
+				level,
+				dragIcon: (
+					<DragIndicatorIcon
+						style={{
+							width: 18,
+							height: 18,
+							color: "rgba(55, 53, 47, 0.3)",
+						}}
+					/>
+				),
+				styles: {
+					blockAndGutter: {
+						padding: "4px 0",
+					},
+					blockToolbarWrapper: {
+						height: "1.5em",
+					},
+				},
+			}),
+			rootProps: {
+				styles: {
+					root: {
+						margin: 0,
+						lineHeight: "1.5",
+					},
+				},
+			},
+		},
+	]
+);
 
-const withPlugins = [withReact, withHistory] as const;
+const options = {
+	...defaultOptions,
+	...Object.fromEntries(draggableComponentOptions),
+};
+
+console.log("🚀 ~ file: App.tsx ~ line 200 ~ options", options);
+const plugins = [
+	ParagraphPlugin(options),
+	BlockquotePlugin(options),
+	TodoListPlugin(options),
+	ImagePlugin(options),
+	LinkPlugin(options),
+	ListPlugin(options),
+	MentionPlugin(options),
+	TablePlugin(options),
+	MediaEmbedPlugin(options),
+	CodeBlockPlugin(options),
+	CodePlugin(options),
+	HighlightPlugin(options),
+	StrikethroughPlugin(options),
+	ResetBlockTypePlugin(optionsResetBlockTypes),
+	HeadingPlugin(options),
+	BoldPlugin(options),
+	ItalicPlugin(options),
+	UnderlinePlugin(options),
+	SoftBreakPlugin({
+		rules: [
+			{ hotkey: "shift+enter" },
+			{
+				hotkey: "enter",
+				query: {
+					allow: [
+						options.code_block.type,
+						options.blockquote.type,
+						options.td.type,
+					],
+				},
+			},
+		],
+	}),
+	ExitBreakPlugin({
+		rules: [
+			{
+				hotkey: "mod+enter",
+			},
+			{
+				hotkey: "mod+shift+enter",
+				before: true,
+			},
+			{
+				hotkey: "enter",
+				query: {
+					start: true,
+					end: true,
+					allow: headingTypes,
+				},
+			},
+		],
+	}),
+];
+const withPlugins = [
+	withReact,
+	withHistory,
+	withTable(options),
+	withLink(),
+	withList(options),
+	withDeserializeHTML({ plugins }),
+	withMarks(),
+	withImageUpload(),
+	withAutoformat({ rules: autoformatRules }),
+	withNodeID(),
+	withNormalizeTypes({
+		rules: [{ path: [0, 0], strictType: options.h1.type }],
+	}),
+	withTrailingNode({ type: options.p.type, level: 1 }),
+	withInlineVoid({ plugins }),
+] as const;
 // const withPlugins = [withShortcuts, withReact, withHistory] as const;
+
+const initialValue: any[] = [
+	...initialValueForcedLayout,
+	...initialValueBasicMarks,
+	...initialValueHighlight,
+	...initialValueBasicElements,
+	...initialValueList,
+	...initialValueTables,
+	...initialValueLinks,
+	...initialValueMentions,
+	...initialValueImages,
+	...initialValueEmbeds,
+	...initialValueAutoformat,
+	...initialValueSoftBreak,
+	...initialValueExitBreak,
+	...initialValuePasteHtml,
+];
+const setNodeId = (nodes: any[]) => {
+	nodes.forEach((node) => {
+		const children = node.children as any[];
+		children?.forEach((block) => {
+			block.id = lodash.uniqueId();
+		});
+	});
+};
+
+setNodeId(initialValue);
 
 function App() {
 	// const layouts = getLayoutsFromSomewhere();
+	const decorate: any = [];
 	const [value, setValue] = useState<Node[]>(
 		JSON.parse(localStorage.getItem("content")) || initialValue
 	);
-	const renderElement = useCallback((props) => <Element {...props} />, []);
-	const renderLeaf = useCallback((props) => {
-		return <Leaf {...props} />;
-	}, []);
+
+	const {
+		index,
+		search: mentionSearch,
+		target,
+		values,
+		onChangeMention,
+		onKeyDownMention,
+	} = useMention(MENTIONABLES, {
+		maxSuggestions: 10,
+	});
 
 	const editor = useMemo(() => pipe(createEditor(), ...withPlugins), []);
 
+	const onKeyDown = [onKeyDownMention];
+
 	return (
 		<div className="App">
-			<Slate
-				editor={editor}
-				value={value}
-				onChange={(value) => {
-					setValue(value);
-					const content = JSON.stringify(value);
-					localStorage.setItem("content", content);
-				}}
-			>
-				{/* <ResponsiveGridLayout
+			<DndProvider backend={HTML5Backend}>
+				<Slate
+					editor={editor}
+					value={value}
+					onChange={(value) => {
+						setValue(value);
+						onChangeMention(editor);
+						const content = JSON.stringify(value);
+						localStorage.setItem("content", content);
+					}}
+				>
+					{/* <ResponsiveGridLayout
 					// width=""
 					className="layout"
 					// layouts={layouts}
@@ -308,10 +344,37 @@ function App() {
 					<div key="2">3</div>
 				</ResponsiveGridLayout>
 				<div>eqwewwq</div> */}
-				<EditablePlugins plugins={plugins} placeholder="Enter some text..." />
-				{/* <Editable
+					<MentionSelect at={target} valueIndex={index} options={values} />
+					<BalloonToolbar arrow>
+						<ToolbarMark
+							reversed
+							type={MARK_BOLD}
+							icon={<FormatBold />}
+							tooltip={{ content: "Bold (⌘B)" }}
+						/>
+						<ToolbarMark
+							reversed
+							type={MARK_ITALIC}
+							icon={<FormatItalic />}
+							tooltip={{ content: "Italic (⌘I)" }}
+						/>
+						<ToolbarMark
+							reversed
+							type={MARK_UNDERLINE}
+							icon={<FormatUnderlined />}
+							tooltip={{ content: "Underline (⌘U)" }}
+						/>
+					</BalloonToolbar>
+					<EditablePlugins
+						spellCheck={false}
+						plugins={plugins}
+						placeholder="Enter some text..."
+						onKeyDown={onKeyDown}
+						onKeyDownDeps={[index, mentionSearch, target]}
+					/>
+					{/* <Editable
 					renderElement={renderElement}
-					renderLeaf={renderLeaf}
+					renderLeaf={renderLeaf}f
 					placeholder="Write some markdown..."
 					spellCheck={false}
 					onKeyDown={(event) => {
@@ -336,7 +399,8 @@ function App() {
 					}}
 					autoFocus
 				/> */}
-			</Slate>
+				</Slate>
+			</DndProvider>
 		</div>
 	);
 }
