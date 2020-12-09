@@ -1,4 +1,4 @@
-html,
+/* html,
 input,
 textarea {
 	font-family: "Roboto", sans-serif;
@@ -73,4 +73,7 @@ input:focus {
 
 [data-slate-editor] > * + * {
 	margin-top: 1em;
+} */
+.App {
+	padding: 20px;
 }

@@ -6,11 +6,15 @@ import reportWebVitals from "./reportWebVitals";
 import "fontsource-roboto";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import "tippy.js/dist/tippy.css";
+
 // import "fontsource-roboto/500.css";
 //300,400,500,700
 
 ReactDOM.render(
 	<React.StrictMode>
+		<CssBaseline></CssBaseline>
 		<App />
 	</React.StrictMode>,
 	document.getElementById("root")

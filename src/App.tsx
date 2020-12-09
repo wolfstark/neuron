@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 // import logo from "./logo.svg";
 import "./App.css";
 // import { Button, TextField } from "@material-ui/core";
-import { Responsive, WidthProvider } from "react-grid-layout";
+// import { Responsive, WidthProvider } from "react-grid-layout";
 import styled from "styled-components";
 import lodash from "lodash";
 import DragIndicatorIcon from "@material-ui/icons/DragIndicator";
@@ -86,11 +86,9 @@ import {
 import { autoformatRules } from "./autoformatRules";
 import { MENTIONABLES } from "./mentionables";
 import { FormatBold, FormatItalic, FormatUnderlined } from "@material-ui/icons";
+const { ipcRenderer } = window.require("electron");
 
-// console.log(options.h1);
 // TODO:NormalizeTypes,TrailingNode,SerializeHtml
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const CustomEditor = {
 	isBoldMarkActive(editor) {
@@ -317,8 +315,23 @@ function App() {
 	});
 
 	const editor = useMemo(() => pipe(createEditor(), ...withPlugins), []);
+	console.log("🚀 ~ file: App.tsx ~ line 319 ~ App ~ editor", editor);
 
 	const onKeyDown = [onKeyDownMention];
+
+	useEffect(() => {
+		const lins = (event, message) => {
+			console.log(
+				"🚀 ~ file: App.tsx ~ line 329 ~ ipcRenderer.on ~ message",
+				message
+			);
+			Editor.insertText(editor, "A new string of text to be inserted.");
+		};
+		ipcRenderer.on("clipboard-text", lins);
+		return () => {
+			ipcRenderer.off("clipboard-text", lins);
+		};
+	}, [editor]);
 
 	return (
 		<div className="App">
@@ -327,23 +340,13 @@ function App() {
 					editor={editor}
 					value={value}
 					onChange={(value) => {
+						console.log("🚀 ~ file: App.tsx ~ line 342 ~ App ~ value", value);
 						setValue(value);
 						onChangeMention(editor);
 						const content = JSON.stringify(value);
 						localStorage.setItem("content", content);
 					}}
 				>
-					{/* <ResponsiveGridLayout
-					// width=""
-					className="layout"
-					// layouts={layouts}
-					breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-					cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-				>
-					<div key="1">3</div>
-					<div key="2">3</div>
-				</ResponsiveGridLayout>
-				<div>eqwewwq</div> */}
 					<MentionSelect at={target} valueIndex={index} options={values} />
 					<BalloonToolbar arrow>
 						<ToolbarMark
@@ -372,33 +375,6 @@ function App() {
 						onKeyDown={onKeyDown}
 						onKeyDownDeps={[index, mentionSearch, target]}
 					/>
-					{/* <Editable
-					renderElement={renderElement}
-					renderLeaf={renderLeaf}f
-					placeholder="Write some markdown..."
-					spellCheck={false}
-					onKeyDown={(event) => {
-						if (!event.ctrlKey) {
-							return;
-						}
-
-						// Replace the `onKeyDown` logic with our new commands.
-						switch (event.key) {
-							case "`": {
-								event.preventDefault();
-								CustomEditor.toggleCodeBlock(editor);
-								break;
-							}
-
-							case "b": {
-								event.preventDefault();
-								CustomEditor.toggleBoldMark(editor);
-								break;
-							}
-						}
-					}}
-					autoFocus
-				/> */}
 				</Slate>
 			</DndProvider>
 		</div>
