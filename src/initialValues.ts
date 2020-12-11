@@ -57,16 +57,16 @@ export const options = {
 	...setDefaults(DEFAULTS_TABLE, {}),
 	...setDefaults(DEFAULTS_LIST, {}),
 	...setDefaults(DEFAULTS_HEADING, {}),
-	...setDefaults(DEFAULTS_ALIGN, {}),
+	// ...setDefaults(DEFAULTS_ALIGN, {}),
 	...setDefaults(DEFAULTS_BOLD, {}),
 	...setDefaults(DEFAULTS_ITALIC, {}),
 	...setDefaults(DEFAULTS_UNDERLINE, {}),
 	...setDefaults(DEFAULTS_STRIKETHROUGH, {}),
 	...setDefaults(DEFAULTS_CODE, {}),
 	...setDefaults(DEFAULTS_KBD, {}),
-	...setDefaults(DEFAULTS_SUBSUPSCRIPT, {}),
-	...setDefaults(DEFAULTS_HIGHLIGHT, {}),
-	...setDefaults(DEFAULTS_SEARCH_HIGHLIGHT, {}),
+	// ...setDefaults(DEFAULTS_SUBSUPSCRIPT, {}),
+	// ...setDefaults(DEFAULTS_HIGHLIGHT, {}),
+	// ...setDefaults(DEFAULTS_SEARCH_HIGHLIGHT, {}),
 };
 
 export const inlineTypes = [options.mention.type, options.link.type];
@@ -651,9 +651,9 @@ export const initialValueBasicMarks: SlateDocument = [
 				type: options.p.type,
 				children: [
 					{ text: "These are " },
-					{ text: "a subscript", [options.subscript.type]: true },
+					// { text: "a subscript", [options.subscript.type]: true },
 					{ text: " and " },
-					{ text: "a superscript", [options.superscript.type]: true },
+					// { text: "a superscript", [options.superscript.type]: true },
 					{ text: "." },
 				],
 			},
@@ -689,10 +689,10 @@ export const initialValueHighlight: SlateDocument = [
 					{
 						text: "The Highlight plugin enables support for ",
 					},
-					{
-						text: "highlights",
-						[options.highlight.type]: true,
-					},
+					// {
+					// 	text: "highlights",
+					// 	[options.highlight.type]: true,
+					// },
 					{
 						text:
 							", useful when reviewing content or highlighting it for future reference.",

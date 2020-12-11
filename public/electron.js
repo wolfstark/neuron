@@ -38,29 +38,36 @@ app.whenReady().then(() => {
 		// 	newString
 		// );
 		const formats = clipboard.availableFormats();
-		console.log(formats);
+		const detail = {};
+		formats.forEach((format) => {
+			const result = clipboard.read(format);
+			detail[format] = result;
+			// console.log(format, result);
+			// const html = data.getData("text/html");
+			// const vscode = data.getData("vscode-editor-data");
+		});
 
-		const text = clipboard.readText();
-		const html = clipboard.readHTML();
-		const rtf = clipboard.readRTF();
-		const bookmark = clipboard.readBookmark();
-		const img = clipboard.readImage();
+		// const text = clipboard.readText();
+		// const html = clipboard.readHTML();
+		// const rtf = clipboard.readRTF();
+		// const bookmark = clipboard.readBookmark();
+		// const img = clipboard.readImage();
 
-		console.log({ formats, text, html, rtf, bookmark, img });
+		// console.log({ formats, text, html, rtf, bookmark, img });
 
-		const detail = JSON.stringify({ formats, text, html, rtf, bookmark, img });
+		const detailStr = JSON.stringify(detail);
 
 		const info = {
 			type: "info",
 			message: "剪切板内容",
-			detail,
+			detail: detailStr,
 		};
 
-		isDev ? console.log(detail) : dialog.showMessageBoxSync(info);
+		isDev ? console.log(detailStr) : dialog.showMessageBoxSync(info);
 
-		clipboard.writeText(oldString);
 		// mb.showWindow();
 		win.webContents.send("clipboard-text", newString.trim());
+		clipboard.writeText(oldString);
 	});
 	if (!ret) {
 		console.log("registration failed");

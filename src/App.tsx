@@ -8,6 +8,7 @@ import lodash from "lodash";
 import DragIndicatorIcon from "@material-ui/icons/DragIndicator";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import short from "short-uuid";
 import { Slate, Editable, withReact } from "slate-react";
 import {
 	Node,
@@ -63,6 +64,14 @@ import {
 	MARK_BOLD,
 	MARK_ITALIC,
 	MARK_UNDERLINE,
+	MARK_CODE,
+	MARK_KBD,
+	MARK_STRIKETHROUGH,
+	ELEMENT_LINK,
+	ToolbarLink,
+	getAboveByType,
+	upsertLinkAtSelection,
+	isCollapsed,
 } from "@udecode/slate-plugins";
 import {
 	initialValueBasicMarks,
@@ -85,7 +94,14 @@ import {
 } from "./initialValues";
 import { autoformatRules } from "./autoformatRules";
 import { MENTIONABLES } from "./mentionables";
-import { FormatBold, FormatItalic, FormatUnderlined } from "@material-ui/icons";
+import {
+	Code,
+	FormatBold,
+	FormatItalic,
+	FormatStrikethrough,
+	FormatUnderlined,
+	Link,
+} from "@material-ui/icons";
 const { ipcRenderer } = window.require("electron");
 
 // TODO:NormalizeTypes,TrailingNode,SerializeHtml
@@ -126,6 +142,7 @@ const CustomEditor = {
 		);
 	},
 };
+// 定义可拖拽的类型，可以嵌套
 const draggableComponentOptions = [
 	{ ...defaultOptions.p, level: 1 },
 	defaultOptions.blockquote,
@@ -140,6 +157,7 @@ const draggableComponentOptions = [
 	defaultOptions.link,
 	defaultOptions.ol,
 	defaultOptions.ul,
+	// defaultOptions.li,
 	defaultOptions.table,
 	defaultOptions.media_embed,
 	defaultOptions.code_block,
@@ -194,7 +212,10 @@ const options = {
 	...defaultOptions,
 	...Object.fromEntries(draggableComponentOptions),
 };
-
+console.log(
+	"🚀 ~ file: App.tsx ~ line 223 ~ Object.fromEntries(draggableComponentOptions)",
+	Object.fromEntries(draggableComponentOptions)
+);
 console.log("🚀 ~ file: App.tsx ~ line 200 ~ options", options);
 const plugins = [
 	ParagraphPlugin(options),
@@ -256,11 +277,12 @@ const withPlugins = [
 	withTable(options),
 	withLink(),
 	withList(options),
+	// withDeserializeMd({ plugins }),
 	withDeserializeHTML({ plugins }),
 	withMarks(),
 	withImageUpload(),
 	withAutoformat({ rules: autoformatRules }),
-	withNodeID(),
+	withNodeID({ idCreator: short.generate }),
 	withNormalizeTypes({
 		rules: [{ path: [0, 0], strictType: options.h1.type }],
 	}),
@@ -289,7 +311,7 @@ const setNodeId = (nodes: any[]) => {
 	nodes.forEach((node) => {
 		const children = node.children as any[];
 		children?.forEach((block) => {
-			block.id = lodash.uniqueId();
+			block.id = short.generate();
 		});
 	});
 };
@@ -302,6 +324,7 @@ function App() {
 	const [value, setValue] = useState<Node[]>(
 		JSON.parse(localStorage.getItem("content")) || initialValue
 	);
+	console.log("🚀 ~ file: App.tsx ~ line 304 ~ App ~ value", value);
 
 	const {
 		index,
@@ -315,9 +338,21 @@ function App() {
 	});
 
 	const editor = useMemo(() => pipe(createEditor(), ...withPlugins), []);
+	const { insertData } = editor;
 	console.log("🚀 ~ file: App.tsx ~ line 319 ~ App ~ editor", editor);
 
 	const onKeyDown = [onKeyDownMention];
+
+	editor.insertData = (data, ...other) => {
+		console.log("insertData", { data, other });
+		data.types.forEach((type) => {
+			const result = data.getData(type);
+			console.log(type, result);
+			// const html = data.getData("text/html");
+			// const vscode = data.getData("vscode-editor-data");
+		});
+		insertData(data, ...other);
+	};
 
 	useEffect(() => {
 		const lins = (event, message) => {
@@ -325,7 +360,16 @@ function App() {
 				"🚀 ~ file: App.tsx ~ line 329 ~ ipcRenderer.on ~ message",
 				message
 			);
-			Editor.insertText(editor, "A new string of text to be inserted.");
+			// Editor.insertText(editor, message);
+			Editor.insertNode(editor, {
+				type: "p",
+				// id: short.generate(),
+				children: [
+					{
+						text: message,
+					},
+				],
+			});
 		};
 		ipcRenderer.on("clipboard-text", lins);
 		return () => {
@@ -366,6 +410,58 @@ function App() {
 							type={MARK_UNDERLINE}
 							icon={<FormatUnderlined />}
 							tooltip={{ content: "Underline (⌘U)" }}
+						/>
+						<ToolbarMark
+							reversed
+							type={MARK_CODE}
+							icon={<Code />}
+							tooltip={{ content: "Underline (⌘U)" }}
+						/>
+						<ToolbarMark
+							reversed
+							type={MARK_STRIKETHROUGH}
+							icon={<FormatStrikethrough />}
+							tooltip={{ content: "Underline (⌘U)" }}
+						/>
+						{/* <ToolbarMark
+							reversed
+							type={ELEMENT_LINK}
+							icon={<Link />}
+							tooltip={{ content: "Underline (⌘U)" }}
+						/> */}
+						<ToolbarLink
+							onMouseDown={(event) => {
+								// Object.assign
+								event.preventDefault();
+								let prevUrl = "";
+								let url = "";
+								const linkNode = getAboveByType(editor, options.link.type);
+
+								if (linkNode) {
+									prevUrl = linkNode[0].url as string;
+								}
+
+								// TODO: 使用js弹窗 https://material-ui.com/zh/components/dialogs/
+								// const url = window.prompt(
+								// 	`Enter the URL of the link:`,
+								// 	prevUrl
+								// );
+								if (!url) return; // If our cursor is in middle of a link, then we don't want to inser it inline
+
+								const shouldWrap =
+									linkNode !== undefined && isCollapsed(editor.selection);
+								upsertLinkAtSelection(
+									editor,
+									url,
+									Object.assign(
+										{
+											wrap: shouldWrap,
+										},
+										options
+									)
+								);
+							}}
+							icon={<Link />}
 						/>
 					</BalloonToolbar>
 					<EditablePlugins
