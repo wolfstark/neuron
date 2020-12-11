@@ -28,46 +28,10 @@ function createWindow() {
 app.whenReady().then(() => {
 	const win = createWindow();
 	const ret = globalShortcut.register("Alt+X", async () => {
-		console.log("Alt+X is pressed");
 		const oldString = clipboard.readText();
 		robotjs.keyTap("c", "command"); // ‎当没有选择文本时无效‎
 		await new Promise((resolve) => setTimeout(resolve, 100));
-		const newString = clipboard.readText();
-		// console.log(
-		// 	"🚀 ~ file: electron.js ~ line 31 ~ ret ~ newString",
-		// 	newString
-		// );
-		const formats = clipboard.availableFormats();
-		const detail = {};
-		formats.forEach((format) => {
-			const result = clipboard.read(format);
-			detail[format] = result;
-			// console.log(format, result);
-			// const html = data.getData("text/html");
-			// const vscode = data.getData("vscode-editor-data");
-		});
-
-		// const text = clipboard.readText();
-		// const html = clipboard.readHTML();
-		// const rtf = clipboard.readRTF();
-		// const bookmark = clipboard.readBookmark();
-		// const img = clipboard.readImage();
-
-		// console.log({ formats, text, html, rtf, bookmark, img });
-
-		const detailStr = JSON.stringify(detail);
-
-		const info = {
-			type: "info",
-			message: "剪切板内容",
-			detail: detailStr,
-		};
-
-		isDev ? console.log(detailStr) : dialog.showMessageBoxSync(info);
-
-		// mb.showWindow();
-		win.webContents.send("clipboard-text", newString.trim());
-		clipboard.writeText(oldString);
+		win.webContents.send("clipboard-text", oldString);
 	});
 	if (!ret) {
 		console.log("registration failed");

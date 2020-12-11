@@ -102,7 +102,7 @@ import {
 	FormatUnderlined,
 	Link,
 } from "@material-ui/icons";
-const { ipcRenderer } = window.require("electron");
+const { ipcRenderer, clipboard } = window.require("electron");
 
 // TODO:NormalizeTypes,TrailingNode,SerializeHtml
 
@@ -342,7 +342,7 @@ function App() {
 	console.log("🚀 ~ file: App.tsx ~ line 319 ~ App ~ editor", editor);
 
 	const onKeyDown = [onKeyDownMention];
-
+	// 黏贴文本的钩子
 	editor.insertData = (data, ...other) => {
 		console.log("insertData", { data, other });
 		data.types.forEach((type) => {
@@ -355,18 +355,43 @@ function App() {
 	};
 
 	useEffect(() => {
-		const lins = (event, message) => {
-			console.log(
-				"🚀 ~ file: App.tsx ~ line 329 ~ ipcRenderer.on ~ message",
-				message
-			);
+		const lins = (event, oldString) => {
+			const newString = clipboard.readText();
+			// console.log(
+			// 	"🚀 ~ file: electron.js ~ line 31 ~ ret ~ newString",
+			// 	newString
+			// );
+			const formats = clipboard.availableFormats();
+			const detail = {};
+			formats.forEach((format) => {
+				const result = clipboard.read(format);
+				console.log(clipboard.read("html"));
+
+				detail[format] = result;
+				// console.log(format, result);
+				// const html = data.getData("text/html");
+				// const vscode = data.getData("vscode-editor-data");
+			});
+
+			// const text = clipboard.readText();
+			// const html = clipboard.readHTML();
+			// const rtf = clipboard.readRTF();
+			// const bookmark = clipboard.readBookmark();
+			// const img = clipboard.readImage();
+
+			// console.log({ formats, text, html, rtf, bookmark, img });
+
+			console.log("detail", detail);
+
+			// mb.showWindow();
+			clipboard.writeText(oldString);
 			// Editor.insertText(editor, message);
 			Editor.insertNode(editor, {
 				type: "p",
 				// id: short.generate(),
 				children: [
 					{
-						text: message,
+						text: newString,
 					},
 				],
 			});
