@@ -19,12 +19,13 @@ import {
 	createEditor,
 	Element as SlateElement,
 	Text,
+	Path,
 } from "slate";
 import { withHistory } from "slate-history";
 import {
 	EditablePlugins,
 	pipe,
-	withDeserializeHTML,
+	// withDeserializeHTML,
 	withDeserializeMd,
 	SoftBreakPlugin,
 	withAutoformat,
@@ -54,7 +55,7 @@ import {
 	withMarks,
 	withImageUpload,
 	withNormalizeTypes,
-	withTrailingNode,
+	// withTrailingNode,
 	TodoListPlugin,
 	ResetBlockTypePlugin,
 	ExitBreakPlugin,
@@ -72,6 +73,9 @@ import {
 	getAboveByType,
 	upsertLinkAtSelection,
 	isCollapsed,
+	deserializeHTMLToDocumentFragment,
+	parseMD,
+	SlateDocumentFragment,
 } from "@udecode/slate-plugins";
 import {
 	initialValueBasicMarks,
@@ -103,9 +107,9 @@ import {
 	Link,
 } from "@material-ui/icons";
 const { ipcRenderer, clipboard } = window.require("electron");
-
+// Node.fra
 // TODO:NormalizeTypes,TrailingNode,SerializeHtml
-
+// Editor.above
 const CustomEditor = {
 	isBoldMarkActive(editor) {
 		const [match] = Editor.nodes(editor, {
@@ -216,7 +220,6 @@ console.log(
 	"🚀 ~ file: App.tsx ~ line 223 ~ Object.fromEntries(draggableComponentOptions)",
 	Object.fromEntries(draggableComponentOptions)
 );
-console.log("🚀 ~ file: App.tsx ~ line 200 ~ options", options);
 const plugins = [
 	ParagraphPlugin(options),
 	BlockquotePlugin(options),
@@ -278,7 +281,7 @@ const withPlugins = [
 	withLink(),
 	withList(options),
 	// withDeserializeMd({ plugins }),
-	withDeserializeHTML({ plugins }),
+	// withDeserializeHTML({ plugins }),
 	withMarks(),
 	withImageUpload(),
 	withAutoformat({ rules: autoformatRules }),
@@ -286,7 +289,7 @@ const withPlugins = [
 	withNormalizeTypes({
 		rules: [{ path: [0, 0], strictType: options.h1.type }],
 	}),
-	withTrailingNode({ type: options.p.type, level: 1 }),
+	// withTrailingNode({ type: options.p.type, level: 1 }),
 	withInlineVoid({ plugins }),
 ] as const;
 // const withPlugins = [withShortcuts, withReact, withHistory] as const;
@@ -318,13 +321,17 @@ const setNodeId = (nodes: any[]) => {
 
 setNodeId(initialValue);
 
+const inlineTypes = plugins.reduce((arr, plugin) => {
+	const types = plugin.inlineTypes || [];
+	return arr.concat(types);
+}, []);
+
 function App() {
 	// const layouts = getLayoutsFromSomewhere();
 	const decorate: any = [];
 	const [value, setValue] = useState<Node[]>(
 		JSON.parse(localStorage.getItem("content")) || initialValue
 	);
-	console.log("🚀 ~ file: App.tsx ~ line 304 ~ App ~ value", value);
 
 	const {
 		index,
@@ -339,66 +346,64 @@ function App() {
 
 	const editor = useMemo(() => pipe(createEditor(), ...withPlugins), []);
 	const { insertData } = editor;
-	console.log("🚀 ~ file: App.tsx ~ line 319 ~ App ~ editor", editor);
 
 	const onKeyDown = [onKeyDownMention];
 	// 黏贴文本的钩子
-	editor.insertData = (data, ...other) => {
-		console.log("insertData", { data, other });
-		data.types.forEach((type) => {
-			const result = data.getData(type);
-			console.log(type, result);
+	editor.insertData = (data) => {
+		console.log("insertData", data);
+
+		// data.types.find((type) => {
+		// 	const result = data.getData(type);
+		// 	console.log(type, result);
+		// 	// const html = data.getData("text/html");
+		// 	// const vscode = data.getData("vscode-editor-data");
+		// });
+		const formats = [...data.types];
+		formats.unshift("text/plain"); // 兜底
+		const result = lodash.findLast(formats, (type) => {
+			const clipboardData = data.getData(type);
+			console.log(type, clipboardData);
+			// return !!result;
+
+			switch (type) {
+				case "vscode-editor-data":
+					appendTextStrToEditor(data.getData("text/plain"), editor); // TODO: 临时处理
+					return true;
+				case "text/html":
+					appendHTMLStrToEditor(clipboardData, editor);
+					return true;
+				case "text/plain":
+					appendTextStrToEditor(clipboardData, editor);
+					return true;
+				default:
+					return false;
+			}
 			// const html = data.getData("text/html");
 			// const vscode = data.getData("vscode-editor-data");
 		});
-		insertData(data, ...other);
+		if (!result) {
+			insertData(data);
+		}
 	};
 
 	useEffect(() => {
-		const lins = (event, oldString) => {
-			const newString = clipboard.readText();
-			// console.log(
-			// 	"🚀 ~ file: electron.js ~ line 31 ~ ret ~ newString",
-			// 	newString
-			// );
+		const clipboardStrHandle = (event, oldString) => {
 			const formats = clipboard.availableFormats();
-			const detail = {};
-			formats.forEach((format) => {
-				const result = clipboard.read(format);
-				console.log(clipboard.read("html"));
+			formats.unshift("text/plain"); // 兜底
 
-				detail[format] = result;
-				// console.log(format, result);
-				// const html = data.getData("text/html");
-				// const vscode = data.getData("vscode-editor-data");
-			});
+			lodash.findLast(formats, executeFormat(editor));
 
-			// const text = clipboard.readText();
-			// const html = clipboard.readHTML();
-			// const rtf = clipboard.readRTF();
-			// const bookmark = clipboard.readBookmark();
-			// const img = clipboard.readImage();
-
-			// console.log({ formats, text, html, rtf, bookmark, img });
-
-			console.log("detail", detail);
-
-			// mb.showWindow();
-			clipboard.writeText(oldString);
-			// Editor.insertText(editor, message);
-			Editor.insertNode(editor, {
-				type: "p",
-				// id: short.generate(),
-				children: [
-					{
-						text: newString,
-					},
-				],
-			});
+			// clipboard.writeText(oldString);// TODO: 恢复
 		};
-		ipcRenderer.on("clipboard-text", lins);
+		const extensionHtmlHandle = (event, html) => {
+			appendHTMLStrToEditor(html, editor);
+			// clipboard.writeText(oldString);// TODO: 恢复
+		};
+		ipcRenderer.on("clipboard-text", clipboardStrHandle);
+		ipcRenderer.on("extension-html", extensionHtmlHandle);
 		return () => {
-			ipcRenderer.off("clipboard-text", lins);
+			ipcRenderer.off("clipboard-text", clipboardStrHandle);
+			ipcRenderer.off("extension-html", extensionHtmlHandle);
 		};
 	}, [editor]);
 
@@ -409,7 +414,6 @@ function App() {
 					editor={editor}
 					value={value}
 					onChange={(value) => {
-						console.log("🚀 ~ file: App.tsx ~ line 342 ~ App ~ value", value);
 						setValue(value);
 						onChangeMention(editor);
 						const content = JSON.stringify(value);
@@ -503,3 +507,84 @@ function App() {
 }
 
 export default App;
+function executeFormat(editor): lodash.ListIterateeCustom<string, boolean> {
+	return (type) => {
+		switch (type) {
+			case "vscode-editor-data":
+				// "vscode-editor-data" 没办法直接读取数据，统一处理成block块
+				const vscodeData = clipboard.read(type);
+				appendTextStrToEditor(clipboard.readText(), editor); // TODO: 临时处理
+				return true;
+			case "text/html":
+				const html = clipboard.readHTML();
+				appendHTMLStrToEditor(html, editor);
+				return true;
+			case "text/plain":
+				const content = clipboard.readText();
+				appendTextStrToEditor(content, editor);
+				return true;
+			default:
+				return false;
+		}
+	};
+}
+
+function appendHTMLStrToEditor(html: string, editor) {
+	console.log(
+		"🚀 ~ file: App.tsx ~ line 559 ~ appendHTMLStrToEditor ~ html",
+		html
+	);
+	if (html) {
+		const { body } = new DOMParser().parseFromString(html, "text/html");
+		const fragment: SlateDocumentFragment = deserializeHTMLToDocumentFragment({
+			plugins,
+			element: body,
+		});
+
+		Transforms.insertNodes(
+			editor,
+			{
+				type: "p",
+				children: [
+					{
+						text: "",
+					},
+				],
+			},
+			{ select: true }
+		);
+		const firstNodeType = fragment[0].type;
+		if (firstNodeType && !inlineTypes.includes(firstNodeType)) {
+			Transforms.setNodes(editor, {
+				type: fragment[0].type,
+			});
+		}
+		Transforms.insertFragment(editor, fragment);
+	}
+}
+function appendTextStrToEditor(content: string, editor) {
+	if (content) {
+		const fragment = parseMD(options)(content);
+		if (!fragment.length) return;
+
+		Transforms.insertNodes(
+			editor,
+			{
+				type: "p",
+				children: [
+					{
+						text: "",
+					},
+				],
+			},
+			{ select: true }
+		);
+
+		if (fragment[0].type) {
+			Transforms.setNodes(editor, {
+				type: fragment[0].type,
+			});
+		}
+		Transforms.insertFragment(editor, fragment);
+	}
+}

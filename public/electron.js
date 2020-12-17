@@ -8,23 +8,9 @@ const {
 const path = require("path");
 const isDev = require("electron-is-dev");
 const robotjs = require("robotjs");
+const { createWindow } = require("./window");
+const { watchProtocol, setDefaultProtocol } = require("./protocol");
 
-function createWindow() {
-	const mainWindow = new BrowserWindow({
-		width: 900,
-		height: 680,
-		webPreferences: {
-			nodeIntegration: true,
-		},
-	});
-	mainWindow.loadURL(
-		isDev
-			? "http://localhost:3002"
-			: `file://${path.join(__dirname, "../build/index.html")}`
-	);
-	// mainWindow.on("closed", () => (mainWindow = null));
-	return mainWindow;
-}
 app.whenReady().then(() => {
 	const win = createWindow();
 	const ret = globalShortcut.register("Alt+X", async () => {
@@ -39,6 +25,9 @@ app.whenReady().then(() => {
 
 	// 检查快捷键是否注册成功
 	console.log(globalShortcut.isRegistered("Alt+X"));
+
+	setDefaultProtocol();
+	require("./server");
 });
 app.on("window-all-closed", () => {
 	if (process.platform !== "darwin") {
