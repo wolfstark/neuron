@@ -9,19 +9,20 @@
 		"directories": {
 			"buildResources": "public"
 		}
-  },
-  "browserslist": [
-    "last 1 versions"
-  ],
+	},
+	"browserslist": [
+		"last 1 versions"
+	],
 	"dependencies": {
-		"@umijs/fabric": "^2.3.1",
 		"@material-ui/core": "^4.11.2",
 		"@material-ui/icons": "^4.11.2",
 		"@types/node": "^12.19.9",
 		"@types/react": "^17.0.0",
 		"@types/react-dom": "^17.0.0",
 		"@udecode/slate-plugins": "^0.71.3",
+		"@umijs/fabric": "^2.3.1",
 		"@umijs/preset-react": "^1.7.8",
+		"clsx": "^1.1.1",
 		"cors": "^2.8.5",
 		"electron-is-dev": "^1.2.0",
 		"express": "^4.17.1",
@@ -32,6 +33,7 @@
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"react-grid-layout": "^1.2.0",
+		"react-resizable": "^1.11.0",
 		"robotjs": "^0.6.0",
 		"short-uuid": "^4.1.0",
 		"slate": "^0.59.0",
@@ -40,13 +42,14 @@
 		"slate-react": "^0.59.0",
 		"source-map-explorer": "^2.5.1",
 		"styled-components": "^5.2.1",
+		"tippy.js": "^6.2.7",
 		"typescript": "^4.0.3",
 		"umi": "^3.3.2",
 		"web-vitals": "^0.2.4"
 	},
 	"scripts": {
-    "postinstall": "umi generate tmp",
-    "prettier": "prettier -c --write \"src/**/*\"",
+		"postinstall": "umi generate tmp",
+		"prettier": "prettier -c --write \"src/**/*\"",
 		"start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3002 && electron .\"",
 		"analyze": "source-map-explorer 'build/static/js/*.js'",
 		"react-start": "umi dev",
@@ -55,13 +58,13 @@
 		"release": "npm run react-build && electron-builder --publish=always",
 		"build": "npm run react-build && npm run electron-build",
 		"elev": "electron -v && electron -a",
-    "rebuild": "npm rebuild --runtime=electron --target=11.0.4 --disturl=https://atom.io/download/atom-shell --abi=85",
-    "lint": "umi g tmp && npm run lint:js && npm run lint:style && npm run lint:prettier",
-    "lint-staged:js": "eslint --ext .js,.jsx,.ts,.tsx ",
-    "lint:fix": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src && npm run lint:style",
-    "lint:js": "eslint --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src",
-    "lint:prettier": "prettier --check \"src/**/*\" --end-of-line auto",
-    "lint:style": "stylelint --fix \"src/**/*.less\" --syntax less"
+		"rebuild": "npm rebuild --runtime=electron --target=11.0.4 --disturl=https://atom.io/download/atom-shell --abi=85",
+		"lint": "umi g tmp && npm run lint:js && npm run lint:style && npm run lint:prettier",
+		"lint-staged:js": "eslint --ext .js,.jsx,.ts,.tsx ",
+		"lint:fix": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src && npm run lint:style",
+		"lint:js": "eslint --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src",
+		"lint:prettier": "prettier --check \"src/**/*\" --end-of-line auto",
+		"lint:style": "stylelint --fix \"src/**/*.less\" --syntax less"
 	},
 	"devDependencies": {
 		"@types/react-grid-layout": "^1.1.1",

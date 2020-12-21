@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 // import logo from "./logo.svg";
-import './App.css';
 // import { Button, TextField } from "@material-ui/core";
 // import { Responsive, WidthProvider } from "react-grid-layout";
 import styled from 'styled-components';
@@ -167,16 +166,7 @@ const draggableComponentOptions = [
   defaultOptions.media_embed,
   defaultOptions.code_block,
 ].map(
-  ({
-    type,
-    level,
-    component,
-    ...options
-  }: {
-    type: string;
-    level?: number;
-    component: any;
-  }) => [
+  ({ type, level, component, ...options }: { type: string; level?: number; component: any }) => [
     type,
     {
       ...options,
@@ -246,11 +236,7 @@ const plugins = [
       {
         hotkey: 'enter',
         query: {
-          allow: [
-            options.code_block.type,
-            options.blockquote.type,
-            options.td.type,
-          ],
+          allow: [options.code_block.type, options.blockquote.type, options.td.type],
         },
       },
     ],
@@ -478,16 +464,11 @@ function App() {
                 // );
                 if (!url) return; // If our cursor is in middle of a link, then we don't want to inser it inline
 
-                const shouldWrap =
-                  linkNode !== undefined && isCollapsed(editor.selection);
-                upsertLinkAtSelection(
-                  editor,
-                  url,
-                  {
-                    wrap: shouldWrap,
-                    ...options,
-                  },
-                );
+                const shouldWrap = linkNode !== undefined && isCollapsed(editor.selection);
+                upsertLinkAtSelection(editor, url, {
+                  wrap: shouldWrap,
+                  ...options,
+                });
               }}
               icon={<Link />}
             />
@@ -508,18 +489,18 @@ function App() {
 export default App;
 function executeFormat(editor): lodash.ListIterateeCustom<string, boolean> {
   return (type) => {
+    const vscodeData = clipboard.read(type);
+    const html = clipboard.readHTML();
+    const content = clipboard.readText();
     switch (type) {
       case 'vscode-editor-data':
         // "vscode-editor-data" 没办法直接读取数据，统一处理成block块
-        const vscodeData = clipboard.read(type);
         appendTextStrToEditor(clipboard.readText(), editor); // TODO: 临时处理
         return true;
       case 'text/html':
-        const html = clipboard.readHTML();
         appendHTMLStrToEditor(html, editor);
         return true;
       case 'text/plain':
-        const content = clipboard.readText();
         appendTextStrToEditor(content, editor);
         return true;
       default:
@@ -529,10 +510,7 @@ function executeFormat(editor): lodash.ListIterateeCustom<string, boolean> {
 }
 
 function appendHTMLStrToEditor(html: string, editor) {
-  console.log(
-    '🚀 ~ file: App.tsx ~ line 559 ~ appendHTMLStrToEditor ~ html',
-    html,
-  );
+  console.log('🚀 ~ file: App.tsx ~ line 559 ~ appendHTMLStrToEditor ~ html', html);
   if (html) {
     const { body } = new DOMParser().parseFromString(html, 'text/html');
     const fragment: SlateDocumentFragment = deserializeHTMLToDocumentFragment({
