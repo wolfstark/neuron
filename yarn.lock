@@ -5310,14 +5310,9 @@ clone@^2.1.1:
   resolved "https://registry.npm.taobao.org/clone/download/clone-2.1.2.tgz#1b7f4b9f591f1e8f83670401600345a02887435f"
   integrity sha1-G39Ln1kfHo+DZwQBYANFoCiHQ18=
 
-clsx@^1.0.4:
+clsx@^1.0.4, clsx@^1.1.1:
   version "1.1.1"
   resolved "https://registry.npm.taobao.org/clsx/download/clsx-1.1.1.tgz"
-  integrity sha1-mLMTT5q73yOyZjSRrOE8XAOnMYg=
-
-clsx@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.npm.taobao.org/clsx/download/clsx-1.1.1.tgz#98b3134f9abbdf23b2663491ace13c5c03a73188"
   integrity sha1-mLMTT5q73yOyZjSRrOE8XAOnMYg=
 
 co@^4.6.0:
@@ -6619,6 +6614,11 @@ electron-is-dev@^1.2.0:
   resolved "https://registry.npm.taobao.org/electron-is-dev/download/electron-is-dev-1.2.0.tgz"
   integrity sha1-LlzqChs8zxyG9XfO53Nj71XesF4=
 
+electron-log@^4.3.1:
+  version "4.3.1"
+  resolved "http://10.77.0.105:4873/electron-log/-/electron-log-4.3.1.tgz#1405fef9d4e6964a5fdb8790a69163aa237ffe91"
+  integrity sha512-S/0CMjYjgyWUsZ3d27VvErPaI5W4oILp4jfeCuN4DhDqrJW6jKRUD2PxFfTdeZEIjM7+fttGg7A61rPcAcZC1w==
+
 electron-publish@22.9.1:
   version "22.9.1"
   resolved "https://registry.npm.taobao.org/electron-publish/download/electron-publish-22.9.1.tgz?cache=0&sync_timestamp=1600767675244&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Felectron-publish%2Fdownload%2Felectron-publish-22.9.1.tgz"
@@ -7915,8 +7915,8 @@ fs-extra@^8.1.0:
 
 fs-extra@^9.0.0, fs-extra@^9.0.1:
   version "9.0.1"
-  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-9.0.1.tgz"
-  integrity sha512-h2iAoN838FqAFJY2/qVpzFXy+EBxfVE220PalAqQLDVsFOHLJrZvut5puAbCdNv6WJk+B8ihI+k0c7JK5erwqQ==
+  resolved "https://registry.npm.taobao.org/fs-extra/download/fs-extra-9.0.1.tgz#910da0062437ba4c39fedd863f1675ccfefcb9fc"
+  integrity sha1-kQ2gBiQ3ukw5/t2GPxZ1zP78ufw=
   dependencies:
     at-least-node "^1.0.0"
     graceful-fs "^4.2.0"
@@ -13730,7 +13730,7 @@ react-router-config@5.1.1:
   dependencies:
     "@babel/runtime" "^7.1.2"
 
-react-router-dom@5.2.0, react-router-dom@^5.1.2:
+react-router-dom@5.2.0, react-router-dom@^5.1.2, react-router-dom@^5.2.0:
   version "5.2.0"
   resolved "https://registry.npm.taobao.org/react-router-dom/download/react-router-dom-5.2.0.tgz#9e65a4d0c45e13289e66c7b17c7e175d0ea15662"
   integrity sha1-nmWk0MReEyieZsexfH4XXQ6hVmI=
@@ -13971,6 +13971,11 @@ realpath-native@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npm.taobao.org/realpath-native/download/realpath-native-2.0.0.tgz#7377ac429b6e1fd599dc38d08ed942d0d7beb866"
   integrity sha1-c3esQptuH9WZ3DjQjtlC0Ne+uGY=
+
+recoil@^0.1.2:
+  version "0.1.2"
+  resolved "http://10.77.0.105:4873/recoil/-/recoil-0.1.2.tgz#844c612f535826dbe54c977761a67ded16f6d063"
+  integrity sha512-hIRrHlkmW4yITlBFprVYjVPhzPKYrJKoaDrrJtAtbkMeXfXaa/XE5OlyR10n+rNfnKWNToCKb3Z4fo86IGjkzg==
 
 redent@^2.0.0:
   version "2.0.0"

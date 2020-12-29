@@ -13,6 +13,10 @@ export default defineConfig({
           path: '/',
           component: '@/pages/editor/index',
         },
+        {
+          path: '/list',
+          component: '@/pages/list/index',
+        },
       ],
     },
   ],
@@ -47,6 +51,8 @@ export default defineConfig({
     ],
   ],
   antd: false,
+  dva: false,
+  layout: false,
   targets: {
     chrome: 87,
     firefox: false,

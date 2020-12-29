@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles, useTheme, fade } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import AppBar from '@material-ui/core/AppBar';
@@ -11,7 +11,6 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -20,12 +19,18 @@ import 'fontsource-roboto';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import 'tippy.js/dist/tippy.css';
+import { NavLink } from 'umi';
+import { LinkProps } from 'react-router-dom';
+import { RecoilRoot, useRecoilState, useRecoilSnapshot } from 'recoil';
+
+import TheSearch from './search';
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
+    flexGrow: 1,
   },
   appBar: {
     transition: theme.transitions.create(['margin', 'width'], {
@@ -43,6 +48,13 @@ const useStyles = makeStyles((theme) => ({
   },
   menuButton: {
     marginRight: theme.spacing(2),
+  },
+  title: {
+    flexGrow: 1,
+    display: 'none',
+    [theme.breakpoints.up('sm')]: {
+      display: 'block',
+    },
   },
   hide: {
     display: 'none',
@@ -79,11 +91,50 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: 0,
   },
 }));
+interface ListItemLinkProps {
+  icon?: React.ReactElement;
+  primary: string;
+  to: string;
+}
 
-export default function Layout({ children }) {
+function ListItemLink(props: ListItemLinkProps) {
+  const { icon, primary, to } = props;
+
+  const renderLink = React.useMemo(
+    () =>
+      React.forwardRef<any, Omit<LinkProps, 'to'>>((itemProps, ref) => (
+        <NavLink to={to} ref={ref} {...itemProps} />
+      )),
+    [to],
+  );
+
+  return (
+    <li>
+      <ListItem button component={renderLink}>
+        {icon ? <ListItemIcon>{icon}</ListItemIcon> : null}
+        <ListItemText primary={primary} />
+      </ListItem>
+    </li>
+  );
+}
+
+function DebugObserver() {
+  const snapshot = useRecoilSnapshot();
+  useEffect(() => {
+    console.debug('The following atoms were modified:');
+    // eslint-disable-next-line no-restricted-syntax
+    for (const node of snapshot.getNodes_UNSTABLE({ isModified: true })) {
+      console.debug(node.key, snapshot.getLoadable(node));
+    }
+  }, [snapshot]);
+
+  return null;
+}
+
+function Layout({ children }) {
   const classes = useStyles();
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -94,16 +145,17 @@ export default function Layout({ children }) {
   };
 
   return (
-    <React.StrictMode>
+    <>
       <CssBaseline />
       <div className={classes.root}>
         <AppBar
           position="fixed"
+          color="default"
           className={clsx(classes.appBar, {
             [classes.appBarShift]: open,
           })}
         >
-          <Toolbar>
+          <Toolbar variant="dense">
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -113,9 +165,10 @@ export default function Layout({ children }) {
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" noWrap>
-              Persistent drawer
+            <Typography variant="h6" className={classes.title} noWrap>
+              {/* Persistent drawer */}
             </Typography>
+            <TheSearch />
           </Toolbar>
         </AppBar>
         <Drawer
@@ -129,17 +182,12 @@ export default function Layout({ children }) {
         >
           <div className={classes.drawerHeader}>
             <IconButton onClick={handleDrawerClose}>
-              {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              <ChevronLeftIcon />
             </IconButton>
           </div>
           <Divider />
           <List>
-            <ListItem button key="Inbox">
-              <ListItemIcon>
-                <InboxIcon />
-              </ListItemIcon>
-              <ListItemText primary="Inbox" />
-            </ListItem>
+            <ListItemLink to="/list" primary="Inbox" icon={<InboxIcon />} />
           </List>
         </Drawer>
         <main
@@ -151,6 +199,14 @@ export default function Layout({ children }) {
           {children}
         </main>
       </div>
-    </React.StrictMode>
+    </>
+  );
+}
+export default function RecoilWrapper({ children }) {
+  return (
+    <RecoilRoot>
+      <DebugObserver />
+      <Layout>{children}</Layout>
+    </RecoilRoot>
   );
 }
