@@ -18,4 +18,4 @@ function sendToRenderer(eventName, ...args) {
 function sendToRendererWindow(window, eventName, ...args) {
   window.webContents.send(eventName, ...args);
 }
-exports.sendMainToNotion = sendToRenderer;
+exports.sendToRenderer = sendToRenderer;

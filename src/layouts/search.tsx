@@ -61,16 +61,24 @@ export default function TheSearch() {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterList, setFilterList] = useState([]);
+  console.log('🚀 ~ file: Search.tsx ~ line 64 ~ TheSearch ~ filterList', filterList);
   const [inputVal, setInputVal] = useState('');
 
   const [fileList, setFileList] = useRecoilState(fileListState);
   console.log('🚀 ~ file: index.tsx ~ line 192 ~ Layout ~ fileList', fileList);
   useEffect(() => {
-    rendererIpc.receiveFromMain.addListener('update-file-list', setFileList);
+    const updatelistHandle = (e, filelist) => {
+      setFileList(filelist);
+    };
+    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
     return () => {
-      rendererIpc.receiveFromMain.removeListener('update-file-list', setFileList);
+      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
     };
   }, [setFileList]);
+
+  useEffect(() => {
+    rendererIpc.sendToMain('getLocalfile');
+  }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setAnchorEl(event.currentTarget);
@@ -81,7 +89,7 @@ export default function TheSearch() {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputVal(event.target.value);
-    setFilterList(fileList.map((file) => file.title.indexOf(event.target.value) !== -1));
+    setFilterList(fileList.filter((file) => file.title.indexOf(event.target.value) !== -1));
   };
 
   const open = Boolean(anchorEl);
@@ -121,7 +129,7 @@ export default function TheSearch() {
             <Fade {...TransitionProps} timeout={350}>
               <Paper>
                 <List>
-                  <ListItem button onClick={newPage}>
+                  <ListItem button key="new" onClick={newPage}>
                     <ListItemText
                       primary={`新建页面：'${inputVal}'`}
                       // secondary={secondary ? 'Secondary text' : null}

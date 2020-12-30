@@ -1,37 +1,51 @@
-const fs = require("fs-extra");
-const path = require("path");
+const fs = require('fs-extra');
+const path = require('path');
+const { app } = require('electron');
 
-class FileSystem{
-  constructor(path){
-    this.docpath = path;
+class FileSystem {
+  static instance = null;
+  constructor(storepath) {
+    this.docpath = storepath;
   }
-  async loadFileList(){
+  static getInstance(storepath = path.resolve(app.getPath('documents'), './neuron')) {
+    if (FileSystem.instance == null) {
+      FileSystem.instance = new FileSystem(storepath);
+    }
+    return FileSystem.instance;
+  }
+
+  async loadFileList() {
     try {
-      await fs.ensureDir(this.docpath)
-      const files = await fs.readdir(this.docpath)
-      console.log("🚀 ~ file: file-system.js ~ line 11 ~ FileSystem ~ loadFileList ~ files", files)
-      return files.filter(filename=>filename.endsWith('.md')).map(filename=>{
-        // pa
-        return {
-          filename,
-          title:filename.split('.md')[0],
-        }
-      })
+      await fs.ensureDir(this.docpath);
+      const files = await fs.readdir(this.docpath);
+      console.log('🚀 ~ file: file-system.js ~ line 11 ~ FileSystem ~ loadFileList ~ files', files);
+      return files
+        .filter((filename) => filename.endsWith('.md'))
+        .map((filename) => {
+          // pa
+          return {
+            filename,
+            title: filename.split('.md')[0],
+          };
+        });
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   }
   /**
    *
    * @param {string} filename
    */
-  async newPage(filename){
+  async newPage(filename) {
     try {
-      await fs.appendFile(path.resolve(this.docpath,filename.endsWith('.md')?filename:`${filename}.md`),'')
+      await fs.appendFile(
+        path.resolve(this.docpath, filename.endsWith('.md') ? filename : `${filename}.md`),
+        '',
+      );
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   }
 }
 
-module.exports = FileSystem
+module.exports = FileSystem;
