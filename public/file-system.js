@@ -20,12 +20,12 @@ class FileSystem {
       const files = await fs.readdir(this.docpath);
       console.log('🚀 ~ file: file-system.js ~ line 11 ~ FileSystem ~ loadFileList ~ files', files);
       return files
-        .filter((filename) => filename.endsWith('.md'))
+        .filter((filename) => filename.endsWith('.json'))
         .map((filename) => {
           // pa
           return {
             filename,
-            title: filename.split('.md')[0],
+            title: filename.split('.json')[0],
           };
         });
     } catch (error) {
@@ -39,7 +39,7 @@ class FileSystem {
   async newPage(filename) {
     try {
       await fs.appendFile(
-        path.resolve(this.docpath, filename.endsWith('.md') ? filename : `${filename}.md`),
+        path.resolve(this.docpath, filename.endsWith('.json') ? filename : `${filename}.json`),
         '',
       );
     } catch (error) {
