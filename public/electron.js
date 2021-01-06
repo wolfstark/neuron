@@ -48,13 +48,16 @@ app.on('activate', () => {
 });
 mainIpc.receiveFromRenderer.addListener('new-page', async (event, title) => {
   await nfs.newPage(title);
-  const filelist = await nfs.loadFileList();
-  mainIpc.sendToRenderer('update-file-list', filelist);
+  // const filelist = await nfs.loadFileList();
+  // mainIpc.sendToRenderer('update-file-list', filelist);
 });
 mainIpc.receiveFromRenderer.addListener('getLocalfile', async (event, title) => {
   console.log(
     '🚀 ~ file: electron.js ~ line 53 ~ mainIpc.receiveFromRenderer.addListener ~ getLocalfile',
   );
   const filelist = await nfs.loadFileList();
+  mainIpc.sendToRenderer('update-file-list', filelist);
+});
+nfs.event.on('afterCreateFile', (filelist) => {
   mainIpc.sendToRenderer('update-file-list', filelist);
 });

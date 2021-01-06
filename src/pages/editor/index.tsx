@@ -319,6 +319,7 @@ function App() {
   const [value, setValue] = useState<Node[]>(
     JSON.parse(localStorage.getItem('content')) || initialValue,
   );
+  console.log('🚀 ~ file: index.tsx ~ line 320 ~ App ~ value', value);
 
   const {
     index,
@@ -337,8 +338,6 @@ function App() {
   const onKeyDown = [onKeyDownMention];
   // 黏贴文本的钩子
   editor.insertData = (data) => {
-    console.log('insertData', data);
-
     // data.types.find((type) => {
     // 	const result = data.getData(type);
     // 	console.log(type, result);
@@ -349,7 +348,6 @@ function App() {
     formats.unshift('text/plain'); // 兜底
     const result = lodash.findLast(formats, (type) => {
       const clipboardData = data.getData(type);
-      console.log(type, clipboardData);
       // return !!result;
 
       switch (type) {
@@ -400,10 +398,10 @@ function App() {
         <Slate
           editor={editor}
           value={value}
-          onChange={(value) => {
-            setValue(value);
+          onChange={(val) => {
+            setValue(val);
             onChangeMention(editor);
-            const content = JSON.stringify(value);
+            const content = JSON.stringify(val);
             localStorage.setItem('content', content);
           }}
         >
