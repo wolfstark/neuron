@@ -10,7 +10,7 @@ export default defineConfig({
       component: '@/layouts/index',
       routes: [
         {
-          path: '/',
+          path: '/page/:id',
           component: '@/pages/editor/index',
         },
         {

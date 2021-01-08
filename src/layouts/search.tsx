@@ -61,11 +61,9 @@ export default function TheSearch() {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterList, setFilterList] = useState([]);
-  console.log('🚀 ~ file: Search.tsx ~ line 64 ~ TheSearch ~ filterList', filterList);
   const [inputVal, setInputVal] = useState('');
 
   const [fileList, setFileList] = useRecoilState(fileListState);
-  console.log('🚀 ~ file: index.tsx ~ line 192 ~ Layout ~ fileList', fileList);
   useEffect(() => {
     const updatelistHandle = (e, filelist) => {
       setFileList(filelist);

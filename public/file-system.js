@@ -61,18 +61,9 @@ class FileSystem {
    * @param {string} title
    */
   async newPage(title, content = '', meta = {}) {
-    // getPageTemplate
-    // const str = await fs.readFile(filename, 'utf-8');
-    // const json = JSON.parse(str);
-    // modify json
     try {
       const config = new PageConfig().title(title).meta(meta).addBlock(content).toConfig();
       await this.createFile(this.getfilePath(title), JSON.stringify(config));
-      // await this.loadFileList();
-      // await fs.appendFile(
-      //   path.resolve(this.docpath, title.endsWith('.json') ? title : `${title}.json`),
-      //   content,
-      // );
     } catch (error) {
       console.error('newPage', error);
     }
@@ -105,13 +96,22 @@ class FileSystem {
     });
   }
 
-  // async newPageWithMeta(filename, meta = {}) {
-  //   try {
-  //     await this.newPage(filename, JSON.stringify(meta));
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // }
+  async loadFileJson(title) {
+    try {
+      const str = await fs.readFile(this.getfilePath(title), 'utf-8');
+      const json = JSON.parse(str);
+      return json;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  async modifyFileJson(title, json) {
+    try {
+      await fs.writeFile(this.getfilePath(title), JSON.stringify(json), 'utf-8');
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 module.exports = FileSystem;

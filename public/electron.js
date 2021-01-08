@@ -61,3 +61,17 @@ mainIpc.receiveFromRenderer.addListener('getLocalfile', async (event, title) => 
 nfs.event.on('afterCreateFile', (filelist) => {
   mainIpc.sendToRenderer('update-file-list', filelist);
 });
+
+mainIpc.receiveFromRenderer.addListener('loadFileJson', async (event, title) => {
+  const json = await nfs.loadFileJson(title);
+  mainIpc.sendToRenderer('loadFileJson', json);
+  // const filelist = await nfs.loadFileList();
+  // mainIpc.sendToRenderer('update-file-list', filelist);
+});
+
+mainIpc.receiveFromRenderer.addListener('modifyFileJson', async (event, title, json) => {
+  await nfs.modifyFileJson(title, json);
+  // mainIpc.sendToRenderer('loadFileJson', json);
+  // const filelist = await nfs.loadFileList();
+  // mainIpc.sendToRenderer('update-file-list', filelist);
+});

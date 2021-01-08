@@ -105,6 +105,7 @@ import {
 } from './initialValues';
 import { autoformatRules } from './autoformatRules';
 import { MENTIONABLES } from './mentionables';
+import rendererIpc from '@/utils/rendererIpc';
 
 const { ipcRenderer, clipboard } = window.require('electron');
 // Node.fra
@@ -207,10 +208,7 @@ const options = {
   ...defaultOptions,
   ...Object.fromEntries(draggableComponentOptions),
 };
-console.log(
-  '🚀 ~ file: App.tsx ~ line 223 ~ Object.fromEntries(draggableComponentOptions)',
-  Object.fromEntries(draggableComponentOptions),
-);
+
 const plugins = [
   ParagraphPlugin(options),
   BlockquotePlugin(options),
@@ -313,13 +311,15 @@ const inlineTypes = plugins.reduce((arr, plugin) => {
   return arr.concat(types);
 }, []);
 
-function App() {
+function Page({ match }) {
+  const title: string = match.params.id;
+  console.log('🚀 ~ file: index.tsx ~ line 316 ~ Page ~ title', title);
+
   // const layouts = getLayoutsFromSomewhere();
   const decorate: any = [];
-  const [value, setValue] = useState<Node[]>(
-    JSON.parse(localStorage.getItem('content')) || initialValue,
-  );
-  console.log('🚀 ~ file: index.tsx ~ line 320 ~ App ~ value', value);
+  const [value, setValue] = useState<Node[]>([]);
+  const [meta, setMeta] = useState({});
+  // JSON.parse(localStorage.getItem('content')) || initialValue,
 
   const {
     index,
@@ -333,45 +333,11 @@ function App() {
   });
 
   const editor = useMemo(() => pipe(createEditor(), ...withPlugins), []);
-  const { insertData } = editor;
 
   const onKeyDown = [onKeyDownMention];
-  // 黏贴文本的钩子
-  editor.insertData = (data) => {
-    // data.types.find((type) => {
-    // 	const result = data.getData(type);
-    // 	console.log(type, result);
-    // 	// const html = data.getData("text/html");
-    // 	// const vscode = data.getData("vscode-editor-data");
-    // });
-    const formats = [...data.types];
-    formats.unshift('text/plain'); // 兜底
-    const result = lodash.findLast(formats, (type) => {
-      const clipboardData = data.getData(type);
-      // return !!result;
-
-      switch (type) {
-        case 'vscode-editor-data':
-          appendTextStrToEditor(data.getData('text/plain'), editor); // TODO: 临时处理
-          return true;
-        case 'text/html':
-          appendHTMLStrToEditor(clipboardData, editor);
-          return true;
-        case 'text/plain':
-          appendTextStrToEditor(clipboardData, editor);
-          return true;
-        default:
-          return false;
-      }
-      // const html = data.getData("text/html");
-      // const vscode = data.getData("vscode-editor-data");
-    });
-    if (!result) {
-      insertData(data);
-    }
-  };
 
   useEffect(() => {
+    console.log('🚀 ~ file: index.tsx ~ line 340 ~ useEffect ~ useEffect');
     const clipboardStrHandle = (event, oldString) => {
       const formats = clipboard.availableFormats();
       formats.unshift('text/plain'); // 兜底
@@ -384,13 +350,52 @@ function App() {
       appendHTMLStrToEditor(html, editor);
       // clipboard.writeText(oldString);// TODO: 恢复
     };
-    ipcRenderer.on('clipboard-text', clipboardStrHandle);
-    ipcRenderer.on('extension-html', extensionHtmlHandle);
-    return () => {
-      ipcRenderer.off('clipboard-text', clipboardStrHandle);
-      ipcRenderer.off('extension-html', extensionHtmlHandle);
+    rendererIpc.receiveFromMain.addListener('clipboard-text', clipboardStrHandle);
+    rendererIpc.receiveFromMain.addListener('extension-html', extensionHtmlHandle);
+    // TODO: 黏贴文本的钩子 抽离到插件
+    const { insertData } = editor;
+
+    editor.insertData = (data) => {
+      const formats = [...data.types];
+      formats.unshift('text/plain'); // 兜底
+      const result = lodash.findLast(formats, (type) => {
+        const clipboardData = data.getData(type);
+        // return !!result;
+
+        switch (type) {
+          case 'vscode-editor-data':
+            appendTextStrToEditor(data.getData('text/plain'), editor); // TODO: 临时处理
+            return true;
+          case 'text/html':
+            appendHTMLStrToEditor(clipboardData, editor);
+            return true;
+          case 'text/plain':
+            appendTextStrToEditor(clipboardData, editor);
+            return true;
+          default:
+            return false;
+        }
+      });
+      if (!result) {
+        insertData(data);
+      }
     };
-  }, [editor]);
+    //===== 加载数据
+    // TODO: 调用过程抽象
+    const loadJsonHandle = (event, json) => {
+      // TODO:可以合并减少一次render
+      setValue(json.block);
+      setMeta(json.meta);
+    };
+    rendererIpc.sendToMain('loadFileJson', title);
+    rendererIpc.receiveFromMain.addListener('loadFileJson', loadJsonHandle);
+
+    return () => {
+      rendererIpc.receiveFromMain.removeListener('clipboard-text', clipboardStrHandle);
+      rendererIpc.receiveFromMain.removeListener('extension-html', extensionHtmlHandle);
+      rendererIpc.receiveFromMain.removeListener('loadFileJson', loadJsonHandle);
+    };
+  }, [editor, title]);
 
   return (
     <div className="App">
@@ -401,8 +406,13 @@ function App() {
           onChange={(val) => {
             setValue(val);
             onChangeMention(editor);
-            const content = JSON.stringify(val);
-            localStorage.setItem('content', content);
+            // const content = JSON.stringify(val);
+            // 加入防抖队列
+            rendererIpc.sendToMain('modifyFileJson', title, {
+              meta,
+              block: value,
+            });
+            // localStorage.setItem('content', content);
           }}
         >
           <MentionSelect at={target} valueIndex={index} options={values} />
@@ -484,7 +494,7 @@ function App() {
   );
 }
 
-export default App;
+export default Page;
 function executeFormat(editor): lodash.ListIterateeCustom<string, boolean> {
   return (type) => {
     const vscodeData = clipboard.read(type);
@@ -508,7 +518,6 @@ function executeFormat(editor): lodash.ListIterateeCustom<string, boolean> {
 }
 
 function appendHTMLStrToEditor(html: string, editor) {
-  console.log('🚀 ~ file: App.tsx ~ line 559 ~ appendHTMLStrToEditor ~ html', html);
   if (html) {
     const { body } = new DOMParser().parseFromString(html, 'text/html');
     const fragment: SlateDocumentFragment = deserializeHTMLToDocumentFragment({
