@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 // import logo from "./logo.svg";
 // import { Button, TextField } from "@material-ui/core";
 // import { Responsive, WidthProvider } from "react-grid-layout";
+import { useDebounceFn } from '@umijs/hooks';
 import styled from 'styled-components';
 import lodash from 'lodash';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
@@ -106,6 +107,7 @@ import {
 import { autoformatRules } from './autoformatRules';
 import { MENTIONABLES } from './mentionables';
 import rendererIpc from '@/utils/rendererIpc';
+import _ from 'lodash';
 
 const { ipcRenderer, clipboard } = window.require('electron');
 // Node.fra
@@ -320,7 +322,16 @@ function Page({ match }) {
   const [value, setValue] = useState<Node[]>([]);
   const [meta, setMeta] = useState({});
   // JSON.parse(localStorage.getItem('content')) || initialValue,
-
+  const { run } = useDebounceFn(
+    () => {
+      rendererIpc.sendToMain('modifyFileJson', title, {
+        meta,
+        block: value,
+      });
+    },
+    [value, meta],
+    1000,
+  );
   const {
     index,
     search: mentionSearch,
@@ -408,10 +419,7 @@ function Page({ match }) {
             onChangeMention(editor);
             // const content = JSON.stringify(val);
             // 加入防抖队列
-            rendererIpc.sendToMain('modifyFileJson', title, {
-              meta,
-              block: value,
-            });
+            // run();
             // localStorage.setItem('content', content);
           }}
         >

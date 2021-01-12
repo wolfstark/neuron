@@ -17,6 +17,10 @@ export default defineConfig({
           path: '/list',
           component: '@/pages/list/index',
         },
+        {
+          path: '/plugins',
+          component: '@/pages/plugins/index',
+        },
       ],
     },
   ],

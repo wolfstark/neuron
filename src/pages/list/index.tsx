@@ -20,7 +20,7 @@ const useStyles = makeStyles({
   },
 });
 
-export default function List(props) {
+export default function Page(props) {
   const [fileList, setFileList] = useRecoilState(fileListState);
   const classes = useStyles();
   return (

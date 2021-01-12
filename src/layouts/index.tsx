@@ -188,6 +188,7 @@ function Layout({ children }) {
           <Divider />
           <List>
             <ListItemLink to="/list" primary="Inbox" icon={<InboxIcon />} />
+            <ListItemLink to="/plugins" primary="Plugins" icon={<InboxIcon />} />
           </List>
         </Drawer>
         <main

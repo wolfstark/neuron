@@ -65,13 +65,27 @@ nfs.event.on('afterCreateFile', (filelist) => {
 mainIpc.receiveFromRenderer.addListener('loadFileJson', async (event, title) => {
   const json = await nfs.loadFileJson(title);
   mainIpc.sendToRenderer('loadFileJson', json);
-  // const filelist = await nfs.loadFileList();
-  // mainIpc.sendToRenderer('update-file-list', filelist);
 });
 
 mainIpc.receiveFromRenderer.addListener('modifyFileJson', async (event, title, json) => {
   await nfs.modifyFileJson(title, json);
-  // mainIpc.sendToRenderer('loadFileJson', json);
-  // const filelist = await nfs.loadFileList();
-  // mainIpc.sendToRenderer('update-file-list', filelist);
+});
+
+mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, json) => {
+  const res = dialog.showOpenDialogSync({
+    // title: '对话框窗口的标题',
+    // 默认打开的路径，比如这里默认打开下载文件夹
+    defaultPath: app.getPath('downloads'),
+    buttonLabel: '安装',
+    // 限制能够选择的文件类型
+    filters: [
+      // { name: 'Images', extensions: ['jpg', 'png', 'gif'] },
+      // { name: 'Movies', extensions: ['mkv', 'avi', 'mp4'] },
+      // { name: 'Custom File Type', extensions: ['as'] },
+      // { name: 'All Files', extensions: ['*'] },
+    ],
+    properties: ['openDirectory'],
+    // message: 'mac文件选择器title',
+  });
+  console.log('🚀 ~ file: index.tsx ~ line 61 ~ installHandle ~ res', res);
 });
