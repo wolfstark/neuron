@@ -7,12 +7,6 @@ const mainIpc = require('./mainIpc');
 let win = null;
 const nfs = FileSystem.getInstance();
 
-// async function initLocalData() {
-//   const filelist = await nfs.loadFileList();
-//   console.log('🚀 ~ file: electron.js ~ line 22 ~ initLocalData ~ filelist', filelist);
-//   mainIpc.sendToRenderer('update-file-list', filelist);
-// }
-
 function createWindow() {
   if (win) return win;
   win = new BrowserWindow({

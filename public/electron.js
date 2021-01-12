@@ -11,12 +11,6 @@ const FileSystem = require('./file-system');
 Object.assign(console, log.functions);
 const nfs = FileSystem.getInstance();
 
-// async function initLocalData() {
-//   const filelist = await nfs.loadFileList();
-//   console.log('🚀 ~ file: electron.js ~ line 22 ~ initLocalData ~ filelist', filelist);
-//   mainIpc.sendToRenderer('update-file-list', filelist);
-// }
-
 app.whenReady().then(() => {
   require('./server');
   setDefaultProtocol();
@@ -48,18 +42,21 @@ app.on('activate', () => {
 });
 mainIpc.receiveFromRenderer.addListener('new-page', async (event, title) => {
   await nfs.newPage(title);
-  // const filelist = await nfs.loadFileList();
-  // mainIpc.sendToRenderer('update-file-list', filelist);
 });
-mainIpc.receiveFromRenderer.addListener('getLocalfile', async (event, title) => {
-  console.log(
-    '🚀 ~ file: electron.js ~ line 53 ~ mainIpc.receiveFromRenderer.addListener ~ getLocalfile',
-  );
-  const filelist = await nfs.loadFileList();
-  mainIpc.sendToRenderer('update-file-list', filelist);
+mainIpc.receiveFromRenderer.addListener('getLocalfile', (event, title) => {
+  nfs.loadFileList().then((list) => {
+    mainIpc.sendToRenderer('update-file-list', list);
+  });
+  nfs.loadPluginList().then((list) => {
+    mainIpc.sendToRenderer('update-plugin-list', list);
+  });
 });
 nfs.event.on('afterCreateFile', (filelist) => {
   mainIpc.sendToRenderer('update-file-list', filelist);
+});
+
+nfs.event.on('afterInstallPlugin', (filelist) => {
+  mainIpc.sendToRenderer('update-plugin-list', filelist);
 });
 
 mainIpc.receiveFromRenderer.addListener('loadFileJson', async (event, title) => {
@@ -87,5 +84,8 @@ mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, js
     properties: ['openDirectory'],
     // message: 'mac文件选择器title',
   });
-  console.log('🚀 ~ file: index.tsx ~ line 61 ~ installHandle ~ res', res);
+  if (res) {
+    nfs.installPlugin(res[0]);
+  }
+  // console.log('🚀 ~ file: index.tsx ~ line 61 ~ installHandle ~ res', res);
 });

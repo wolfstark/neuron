@@ -64,19 +64,6 @@ export default function TheSearch() {
   const [inputVal, setInputVal] = useState('');
 
   const [fileList, setFileList] = useRecoilState(fileListState);
-  useEffect(() => {
-    const updatelistHandle = (e, filelist) => {
-      setFileList(filelist);
-    };
-    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
-    return () => {
-      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
-    };
-  }, [setFileList]);
-
-  useEffect(() => {
-    rendererIpc.sendToMain('getLocalfile');
-  }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setAnchorEl(event.currentTarget);

@@ -22,7 +22,8 @@ import 'tippy.js/dist/tippy.css';
 import { NavLink } from 'umi';
 import { LinkProps } from 'react-router-dom';
 import { RecoilRoot, useRecoilState, useRecoilSnapshot } from 'recoil';
-
+import rendererIpc from '@/utils/rendererIpc';
+import { fileListState, pluginListState } from '@/store/atoms';
 import TheSearch from './search';
 
 const drawerWidth = 240;
@@ -135,6 +136,24 @@ function Layout({ children }) {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = useState(false);
+  const [fileList, setFileList] = useRecoilState(fileListState);
+  const [pluginList, setPluginList] = useRecoilState(pluginListState);
+
+  useEffect(() => {
+    const updatelistHandle = (e, filelist) => {
+      setFileList(filelist);
+    };
+    const updatePluginHandle = (e, pluginlist) => {
+      console.log('🚀 ~ file: index.tsx ~ line 147 ~ updatePluginHandle ~ pluginlist', pluginlist);
+      setPluginList(pluginlist);
+    };
+    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
+    rendererIpc.receiveFromMain.addListener('update-plugin-list', updatePluginHandle);
+    return () => {
+      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
+      rendererIpc.receiveFromMain.removeListener('update-plugin-list', updatePluginHandle);
+    };
+  }, [setFileList, setPluginList]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -143,6 +162,10 @@ function Layout({ children }) {
   const handleDrawerClose = () => {
     setOpen(false);
   };
+
+  useEffect(() => {
+    rendererIpc.sendToMain('getLocalfile');
+  }, []);
 
   return (
     <>

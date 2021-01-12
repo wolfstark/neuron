@@ -54,16 +54,16 @@ export default function Page(props) {
     >
       {pluginList.map((plugin) => {
         return (
-          <ListItem key={plugin.name}>
+          <ListItem key={plugin.pkg.name}>
             <ListItemIcon>
               <Wifi />
             </ListItemIcon>
-            <ListItemText id="switch-list-label-wifi" primary={plugin.name} />
+            <ListItemText id="switch-list-label-wifi" primary={plugin.pkg.name} />
             <ListItemSecondaryAction>
               <Switch
                 edge="end"
-                onChange={handleToggle(plugin.name)}
-                checked={checked.indexOf(plugin.name) !== -1}
+                onChange={handleToggle(plugin.pkg.name)}
+                checked={checked.indexOf(plugin.pkg.name) !== -1}
                 inputProps={{ 'aria-labelledby': 'switch-list-label-wifi' }}
               />
             </ListItemSecondaryAction>
