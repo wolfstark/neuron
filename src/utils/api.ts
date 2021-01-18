@@ -6,7 +6,8 @@ class Api {
   constructor(private setSlatePluginList) {}
 
   registerEditor(fn) {
-    const plugin = fn({});
+    const plugin = fn({}); // TODO: props
+    console.log("🚀 ~ file: api.ts ~ line 10 ~ Api ~ registerEditor ~ plugin", plugin)
     plugin.id = shrotid.generate();
     this.ids.push(plugin.id);
     this.setSlatePluginList((oldList) => [...oldList, plugin]);

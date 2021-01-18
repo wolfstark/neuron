@@ -106,6 +106,8 @@ import {
 import { autoformatRules } from './autoformatRules';
 import { MENTIONABLES } from './mentionables';
 import rendererIpc from '@/utils/rendererIpc';
+import { useRecoilState } from 'recoil';
+import { editorPluginListState } from '@/store/atoms';
 
 const { ipcRenderer, clipboard } = window.require('electron');
 // Node.fra
@@ -314,13 +316,15 @@ const inlineTypes = plugins.reduce((arr, plugin) => {
 function Page({ match }) {
   const title: string = match.params.id;
   console.log('🚀 ~ file: index.tsx ~ line 316 ~ Page ~ title', title);
+  const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
+  console.log('🚀 ~ file: index.tsx ~ line 320 ~ Page ~ slatePluginList', slatePluginList);
 
   // const layouts = getLayoutsFromSomewhere();
-  const decorate: any = [];
+  // const decorate: any = [];
   const [value, setValue] = useState<Node[]>([]);
   const [meta, setMeta] = useState({});
   // JSON.parse(localStorage.getItem('content')) || initialValue,
-  const { run } = useDebounceFn(
+  useDebounceFn(
     () => {
       rendererIpc.sendToMain('modifyFileJson', title, {
         meta,
@@ -389,7 +393,7 @@ function Page({ match }) {
         insertData(data);
       }
     };
-    //===== 加载数据
+    //  ===== 加载数据
     // TODO: 调用过程抽象
     const loadJsonHandle = (event, json) => {
       // TODO:可以合并减少一次render
@@ -406,6 +410,8 @@ function Page({ match }) {
     };
   }, [editor, title]);
 
+  useEffect(() => {}, [slatePluginList]);
+
   return (
     <div className="App">
       <DndProvider backend={HTML5Backend}>
@@ -415,10 +421,6 @@ function Page({ match }) {
           onChange={(val) => {
             setValue(val);
             onChangeMention(editor);
-            // const content = JSON.stringify(val);
-            // 加入防抖队列
-            // run();
-            // localStorage.setItem('content', content);
           }}
         >
           <MentionSelect at={target} valueIndex={index} options={values} />
@@ -489,10 +491,14 @@ function Page({ match }) {
           </BalloonToolbar>
           <EditablePlugins
             spellCheck={false}
-            plugins={plugins}
+            plugins={[...plugins, ...slatePluginList]}
+            renderElementDeps={[slatePluginList.length]}
+            onKeyDownDeps={[slatePluginList.length]}
             placeholder="Enter some text..."
             onKeyDown={onKeyDown}
-            onKeyDownDeps={[index, mentionSearch, target]}
+            // onKeyDownDeps={[index, mentionSearch, target]}
+            autoFocus
+
           />
         </Slate>
       </DndProvider>

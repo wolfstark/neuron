@@ -14,12 +14,12 @@ class PluginPackage {
   boost() {
     const module = window.require(this.config.scriptPath);
     // @ts-ignore
-    this.clearPlugin = module(api);
+    this.clearPlugin = module(this.api);
   }
 
   destory() {
     this.api.destory();
-    this.clearPlugin();
+    if (this.clearPlugin) this.clearPlugin();
   }
 
   isSame(config) {
