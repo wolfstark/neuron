@@ -89,3 +89,8 @@ mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, js
   }
   // console.log('🚀 ~ file: index.tsx ~ line 61 ~ installHandle ~ res', res);
 });
+mainIpc.receiveFromRenderer.addListener('updatePlugin', async (event, plugin) => {
+  await nfs.updatePlugin(plugin);
+  // const json = await nfs.loadFileJson(title);
+  // mainIpc.sendToRenderer('update-plugin-list', filelist);
+});

@@ -23,8 +23,10 @@ import { NavLink } from 'umi';
 import { LinkProps } from 'react-router-dom';
 import { RecoilRoot, useRecoilState, useRecoilSnapshot } from 'recoil';
 import rendererIpc from '@/utils/rendererIpc';
-import { fileListState, pluginListState } from '@/store/atoms';
+import { editorPluginListState, fileListState, pluginListState } from '@/store/atoms';
 import TheSearch from './search';
+import PluginPackage from '@/utils/plugin-package';
+import Api from '@/utils/api';
 
 const drawerWidth = 240;
 
@@ -138,14 +140,31 @@ function Layout({ children }) {
   const [open, setOpen] = useState(false);
   const [fileList, setFileList] = useRecoilState(fileListState);
   const [pluginList, setPluginList] = useRecoilState(pluginListState);
+  const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
+  const [boostList, setBoostList] = useState([]);
 
   useEffect(() => {
     const updatelistHandle = (e, filelist) => {
       setFileList(filelist);
     };
     const updatePluginHandle = (e, pluginlist) => {
-      console.log('🚀 ~ file: index.tsx ~ line 147 ~ updatePluginHandle ~ pluginlist', pluginlist);
-      setPluginList(pluginlist);
+      const uninstallPlugins = [];
+
+      pluginlist.forEach((pluginConfig) => {
+        const targetPluginPackage = pluginList.find((pluginWrap: PluginPackage) => {
+          return pluginWrap.isSame(pluginConfig);
+        });
+        if (targetPluginPackage) {
+          // todo sometings
+        } else {
+          uninstallPlugins.push(new PluginPackage(pluginConfig, new Api(setSlatePluginList)));
+        }
+      });
+
+      // const uninstallPlugins.map((config)=>{
+      //   new PluginPackage(config)
+      // })
+      setPluginList([...pluginlist, ...uninstallPlugins]);
     };
     rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
     rendererIpc.receiveFromMain.addListener('update-plugin-list', updatePluginHandle);
@@ -153,7 +172,17 @@ function Layout({ children }) {
       rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
       rendererIpc.receiveFromMain.removeListener('update-plugin-list', updatePluginHandle);
     };
-  }, [setFileList, setPluginList]);
+  }, [setFileList, setPluginList, pluginList, setSlatePluginList]);
+
+  // useEffect(() => {
+  //   pluginList.forEach((item) => {
+  //     if (item.pkg.enable) {
+  //       // window.require('');
+  //       const module = window.require(item.scriptPath);
+  //       console.log('🚀 ~ file: index.tsx ~ line 162 ~ pluginList.forEach ~ module', module);
+  //     }
+  //   });
+  // }, [pluginList]);
 
   const handleDrawerOpen = () => {
     setOpen(true);

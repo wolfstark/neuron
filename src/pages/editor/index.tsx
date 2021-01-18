@@ -3,7 +3,6 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 // import { Button, TextField } from "@material-ui/core";
 // import { Responsive, WidthProvider } from "react-grid-layout";
 import { useDebounceFn } from '@umijs/hooks';
-import styled from 'styled-components';
 import lodash from 'lodash';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import { DndProvider } from 'react-dnd';
@@ -107,7 +106,6 @@ import {
 import { autoformatRules } from './autoformatRules';
 import { MENTIONABLES } from './mentionables';
 import rendererIpc from '@/utils/rendererIpc';
-import _ from 'lodash';
 
 const { ipcRenderer, clipboard } = window.require('electron');
 // Node.fra

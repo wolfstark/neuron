@@ -9,3 +9,7 @@ export const pluginListState = atom({
   key: KEYS.PLUGIN_LIST,
   default: [],
 });
+export const editorPluginListState = atom({
+  key: KEYS.EDITOR_PLUGIN_LIST,
+  default: [],
+});

@@ -65,7 +65,13 @@ class FileSystem {
         const filepath = path.resolve(this.pluginpath, file);
         const stats = await fs.stat(filepath);
         if (stats.isDirectory() && this.qualifiedPlugin(filepath)) {
-          plugins.push({ pkg: require(`${filepath}/package.json`), pathname: file });
+          const pkg = require(`${filepath}/package.json`);
+          plugins.push({
+            pkg,
+            pathname: filepath,
+            scriptPath: path.resolve(filepath, pkg.main),
+            id: `${file}/${pkg.title}`,
+          });
           // if()
         }
       });
@@ -100,6 +106,7 @@ class FileSystem {
   }
 
   async appendPage(title, content = '') {
+    // bugfix: 如果打开了当前页面，通过server添加的数据就只会在刷新的时候才能显示，应该通知render editor重新获取页面数据
     try {
       const str = await fs.readFile(this.getfilePath(title), 'utf-8');
       const json = JSON.parse(str);
@@ -138,6 +145,24 @@ class FileSystem {
   async modifyFileJson(title, json) {
     try {
       await fs.writeFile(this.getfilePath(title), JSON.stringify(json), 'utf-8');
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async updatePlugin(plugin) {
+    try {
+      await fs.writeFile(
+        path.resolve(plugin.pathname, 'package.json'),
+        JSON.stringify(plugin.pkg),
+        'utf-8',
+      );
+      const p = this.pluginList.find((item) => {
+        return item.id === plugin.id;
+      });
+      p.pkg = plugin.pkg;
+      // const list = await this.loadPluginList(); // TODO: file & plugin 增量添加，不要重新获取完整列表
+      this.event.emit('afterInstallPlugin', this.pluginList);
     } catch (error) {
       console.error(error);
     }
