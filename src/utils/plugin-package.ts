@@ -1,3 +1,4 @@
+import lodash from 'lodash';
 import Api from './api';
 import rendererIpc from './rendererIpc';
 
@@ -6,20 +7,25 @@ class PluginPackage {
 
   constructor(public config, private api: Api) {
     if (config.pkg.enable) {
-      // window.require('');
       this.boost();
     }
+  }
+
+  getApi() {
+    return this.api;
   }
 
   boost() {
     const module = window.require(this.config.scriptPath);
     // @ts-ignore
     this.clearPlugin = module(this.api);
+    console.log('🚀 ~ file: plugin-package.ts ~ line 23 ~ PluginPackage ~ boost', this.config);
   }
 
   destory() {
     this.api.destory();
     if (this.clearPlugin) this.clearPlugin();
+    console.log('🚀 ~ file: plugin-package.ts ~ line 29 ~ PluginPackage ~ destory', this.config);
   }
 
   isSame(config) {
@@ -27,14 +33,15 @@ class PluginPackage {
   }
 
   toggleEnable(isEnable: boolean) {
-    // const value = plugin.config.pkg.name;
-    // eslint-disable-next-line no-param-reassign
-    // const pluginBack = { ...plugin };
-    this.config.pkg = { ...this.config.pkg };
-    this.config.pkg.enable = isEnable;
-    rendererIpc.sendToMain('updatePlugin', this.config);
+    rendererIpc.sendToMain('updatePlugin', {
+      ...this.config,
+      pkg: {
+        ...this.config.pkg,
+        enable: isEnable,
+      },
+    });
     if (isEnable) {
-      this.boost();
+      // this.boost();
     } else {
       this.destory();
     }

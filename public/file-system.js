@@ -65,7 +65,8 @@ class FileSystem {
         const filepath = path.resolve(this.pluginpath, file);
         const stats = await fs.stat(filepath);
         if (stats.isDirectory() && this.qualifiedPlugin(filepath)) {
-          const pkg = require(`${filepath}/package.json`);
+          const pkgstr = await fs.readFile(`${filepath}/package.json`, 'utf-8');
+          const pkg = JSON.parse(pkgstr);
           plugins.push({
             pkg,
             pathname: filepath,

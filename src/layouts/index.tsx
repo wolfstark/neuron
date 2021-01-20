@@ -148,23 +148,30 @@ function Layout({ children }) {
       setFileList(filelist);
     };
     const updatePluginHandle = (e, pluginlist) => {
+      const pluginPackageList = [...pluginList];
       const uninstallPlugins = [];
-
       pluginlist.forEach((pluginConfig) => {
-        const targetPluginPackage = pluginList.find((pluginWrap: PluginPackage) => {
+        const index = pluginList.findIndex((pluginWrap: PluginPackage) => {
           return pluginWrap.isSame(pluginConfig);
         });
-        if (targetPluginPackage) {
+        if (index > -1) {
+          const targetPluginPackage: PluginPackage = pluginList[index];
+          const pluginPackage = new PluginPackage(pluginConfig, targetPluginPackage.getApi());
+
+          if (!pluginConfig.pkg.enable && targetPluginPackage.config.pkg.enable) {
+            pluginPackageList.splice(index, 1, pluginPackage);
+          } else if (pluginConfig.pkg.enable && !targetPluginPackage.config.pkg.enable) {
+            pluginPackageList.splice(index, 1, pluginPackage);
+          }
           // todo sometings
         } else {
           uninstallPlugins.push(new PluginPackage(pluginConfig, new Api(setSlatePluginList)));
         }
       });
-
       // const uninstallPlugins.map((config)=>{
       //   new PluginPackage(config)
       // })
-      setPluginList([...pluginlist, ...uninstallPlugins]);
+      setPluginList([...pluginPackageList, ...uninstallPlugins]);
     };
     rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
     rendererIpc.receiveFromMain.addListener('update-plugin-list', updatePluginHandle);

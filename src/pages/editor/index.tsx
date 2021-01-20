@@ -315,7 +315,7 @@ const inlineTypes = plugins.reduce((arr, plugin) => {
 
 function Page({ match }) {
   const title: string = match.params.id;
-  console.log('🚀 ~ file: index.tsx ~ line 316 ~ Page ~ title', title);
+  // console.log('🚀 ~ file: index.tsx ~ line 316 ~ Page ~ title', title);
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
   console.log('🚀 ~ file: index.tsx ~ line 320 ~ Page ~ slatePluginList', slatePluginList);
 
