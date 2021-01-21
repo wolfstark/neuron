@@ -20,12 +20,15 @@ class FileSystem {
     this.pluginpath = path.resolve(storepath, 'plugins');
   }
 
+  filenamify(name) {
+    return filenamify(name, { replacement: '-' });
+  }
   /**
    *
    * @param {string} storepath
    * @returns {FileSystem}
    */
-  static getInstance(storepath = path.resolve(app.getPath('documents'), './neuron')) {
+  static getInstance(storepath = path.resolve(app.getPath('downloads'), './neuron')) {
     if (FileSystem.instance == null) {
       FileSystem.instance = new FileSystem(storepath);
     }
@@ -45,10 +48,6 @@ class FileSystem {
             title: filename.split('.json')[0],
           };
         });
-      console.log(
-        '🚀 ~ file: file-system.js ~ line 44 ~ FileSystem ~ loadFileList ~ this.list',
-        this.list,
-      );
       return this.list;
     } catch (error) {
       console.error(error);
@@ -86,12 +85,12 @@ class FileSystem {
     }
   }
 
-  getfilePath(title) {
-    return path.resolve(this.docpath, `${filenamify(title)}.json`);
+  getFilenameToPath(title) {
+    return path.resolve(this.docpath, `${this.filenamify(title)}.json`);
   }
 
   getPluginPath(pathname) {
-    return path.resolve(this.pluginpath, filenamify(path.basename(pathname)));
+    return path.resolve(this.pluginpath, this.filenamify(path.basename(pathname)));
   }
   /**
    *
@@ -99,8 +98,14 @@ class FileSystem {
    */
   async newPage(title, content = '', meta = {}) {
     try {
-      const config = new PageConfig().title(title).meta(meta).addBlock(content).toConfig();
-      await this.createFile(this.getfilePath(title), JSON.stringify(config));
+      const pathname = this.getFilenameToPath(title);
+      const filename = this.filenamify(title);
+      const config = new PageConfig()
+        .title(title)
+        .meta({ ...meta, filename })
+        .addBlock(content)
+        .toConfig();
+      await this.createFile(pathname, JSON.stringify(config));
     } catch (error) {
       console.error('newPage', error);
     }
@@ -109,10 +114,10 @@ class FileSystem {
   async appendPage(title, content = '') {
     // bugfix: 如果打开了当前页面，通过server添加的数据就只会在刷新的时候才能显示，应该通知render editor重新获取页面数据
     try {
-      const str = await fs.readFile(this.getfilePath(title), 'utf-8');
+      const str = await fs.readFile(this.getFilenameToPath(title), 'utf-8');
       const json = JSON.parse(str);
       const config = new PageConfig(json).addBlock(content).toConfig();
-      await fs.writeFile(this.getfilePath(title), JSON.stringify(config), 'utf-8');
+      await fs.writeFile(this.getFilenameToPath(title), JSON.stringify(config), 'utf-8');
     } catch (error) {
       console.error(error);
     }
@@ -130,13 +135,13 @@ class FileSystem {
 
   findFile(filename) {
     return this.list.find((item) => {
-      return item.title === filenamify(filename);
+      return item.title === this.filenamify(filename);
     });
   }
 
   async loadFileJson(title) {
     try {
-      const str = await fs.readFile(this.getfilePath(title), 'utf-8');
+      const str = await fs.readFile(this.getFilenameToPath(title), 'utf-8');
       const json = JSON.parse(str);
       return json;
     } catch (error) {
@@ -145,7 +150,7 @@ class FileSystem {
   }
   async modifyFileJson(title, json) {
     try {
-      await fs.writeFile(this.getfilePath(title), JSON.stringify(json), 'utf-8');
+      await fs.writeFile(this.getFilenameToPath(title), JSON.stringify(json), 'utf-8');
     } catch (error) {
       console.error(error);
     }

@@ -1,4 +1,5 @@
 import { atom } from 'recoil';
+import { Node } from 'slate';
 import KEYS from './keys';
 
 export const fileListState = atom({
@@ -12,4 +13,17 @@ export const pluginListState = atom({
 export const editorPluginListState = atom({
   key: KEYS.EDITOR_PLUGIN_LIST,
   default: [],
+});
+
+export interface PageData {
+  meta: {
+    title?: string;
+    filename?: string;
+  };
+  block: Node[];
+}
+
+export const pageDataState = atom<PageData>({
+  key: KEYS.PAGE_DATA,
+  default: { meta: {}, block: [] },
 });

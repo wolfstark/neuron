@@ -27,6 +27,7 @@ import { editorPluginListState, fileListState, pluginListState } from '@/store/a
 import TheSearch from './search';
 import PluginPackage from '@/utils/plugin-package';
 import Api from '@/utils/api';
+import ExportBtn from './exportBtn';
 
 const drawerWidth = 240;
 
@@ -228,6 +229,7 @@ function Layout({ children }) {
               {/* Persistent drawer */}
             </Typography>
             <TheSearch />
+            <ExportBtn />
           </Toolbar>
         </AppBar>
         <Drawer

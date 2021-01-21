@@ -21,7 +21,6 @@ class Api {
         const curIndex = list.findIndex((item) => item.id === id);
         if (curIndex > -1) list.splice(curIndex, 1);
       });
-      console.log('🚀 ~ file: api.ts ~ line 20 ~ Api ~ this.setSlatePluginList ~ list', list);
       return list;
     });
   }

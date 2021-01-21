@@ -28,9 +28,11 @@ const getPageTemplate = (title) => ({
 class PageConfig {
   config = { meta: {}, block: [{ children: [] }] };
   constructor(config = {}) {
-    Object.assign(this.config, config);// ！浅合并，可能会出问题
+    Object.assign(this.config, config); // ！浅合并，可能会出问题
   }
   title(title) {
+    this.config.meta = { ...this.config.meta, title };
+
     this.config.block[0].children[0] = {
       children: [
         {
@@ -40,6 +42,7 @@ class PageConfig {
       id: shortid.generate(),
       type: 'h1',
     };
+    // this.config.meta = { ...this.config.meta, filename:'' };
     return this;
   }
   meta(meta) {

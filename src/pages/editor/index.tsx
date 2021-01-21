@@ -75,6 +75,8 @@ import {
   deserializeHTMLToDocumentFragment,
   parseMD,
   SlateDocumentFragment,
+  // Serialize,
+  // deSerializemar
 } from '@udecode/slate-plugins';
 import {
   Code,
@@ -84,6 +86,9 @@ import {
   FormatUnderlined,
   Link,
 } from '@material-ui/icons';
+import rendererIpc from '@/utils/rendererIpc';
+import { useRecoilState } from 'recoil';
+import { editorPluginListState, PageData, pageDataState } from '@/store/atoms';
 import {
   initialValueBasicMarks,
   initialValueForcedLayout,
@@ -105,9 +110,6 @@ import {
 } from './initialValues';
 import { autoformatRules } from './autoformatRules';
 import { MENTIONABLES } from './mentionables';
-import rendererIpc from '@/utils/rendererIpc';
-import { useRecoilState } from 'recoil';
-import { editorPluginListState } from '@/store/atoms';
 
 const { ipcRenderer, clipboard } = window.require('electron');
 // Node.fra
@@ -301,6 +303,7 @@ const setNodeId = (nodes: any[]) => {
   nodes.forEach((node) => {
     const children = node.children as any[];
     children?.forEach((block) => {
+      // eslint-disable-next-line no-param-reassign
       block.id = short.generate();
     });
   });
@@ -315,23 +318,19 @@ const inlineTypes = plugins.reduce((arr, plugin) => {
 
 function Page({ match }) {
   const title: string = match.params.id;
-  // console.log('🚀 ~ file: index.tsx ~ line 316 ~ Page ~ title', title);
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
-  console.log('🚀 ~ file: index.tsx ~ line 320 ~ Page ~ slatePluginList', slatePluginList);
+  const [pageData, setPageData] = useRecoilState(pageDataState);
 
   // const layouts = getLayoutsFromSomewhere();
   // const decorate: any = [];
-  const [value, setValue] = useState<Node[]>([]);
-  const [meta, setMeta] = useState({});
+  // const [value, setValue] = useState<Node[]>([]);
+  // const [meta, setMeta] = useState({});
   // JSON.parse(localStorage.getItem('content')) || initialValue,
   useDebounceFn(
     () => {
-      rendererIpc.sendToMain('modifyFileJson', title, {
-        meta,
-        block: value,
-      });
+      rendererIpc.sendToMain('modifyFileJson', title, pageData);
     },
-    [value, meta],
+    [pageData],
     1000,
   );
   const {
@@ -350,7 +349,7 @@ function Page({ match }) {
   const onKeyDown = [onKeyDownMention];
 
   useEffect(() => {
-    console.log('🚀 ~ file: index.tsx ~ line 340 ~ useEffect ~ useEffect');
+    console.log('🚀 ~ file: index.tsx ~ line 340 ~ useEffect');
     const clipboardStrHandle = (event, oldString) => {
       const formats = clipboard.availableFormats();
       formats.unshift('text/plain'); // 兜底
@@ -397,8 +396,9 @@ function Page({ match }) {
     // TODO: 调用过程抽象
     const loadJsonHandle = (event, json) => {
       // TODO:可以合并减少一次render
-      setValue(json.block);
-      setMeta(json.meta);
+      // setValue(json.block);
+      // setMeta(json.meta);
+      setPageData(json);
     };
     rendererIpc.sendToMain('loadFileJson', title);
     rendererIpc.receiveFromMain.addListener('loadFileJson', loadJsonHandle);
@@ -408,7 +408,7 @@ function Page({ match }) {
       rendererIpc.receiveFromMain.removeListener('extension-html', extensionHtmlHandle);
       rendererIpc.receiveFromMain.removeListener('loadFileJson', loadJsonHandle);
     };
-  }, [editor, title]);
+  }, [editor, title, setPageData]);
 
   useEffect(() => {}, [slatePluginList]);
 
@@ -417,9 +417,13 @@ function Page({ match }) {
       <DndProvider backend={HTML5Backend}>
         <Slate
           editor={editor}
-          value={value}
+          value={pageData.block}
           onChange={(val) => {
-            setValue(val);
+            // setValue(val);
+            setPageData({
+              ...pageData,
+              block: val,
+            });
             onChangeMention(editor);
           }}
         >
@@ -498,7 +502,6 @@ function Page({ match }) {
             onKeyDown={onKeyDown}
             // onKeyDownDeps={[index, mentionSearch, target]}
             autoFocus
-
           />
         </Slate>
       </DndProvider>
