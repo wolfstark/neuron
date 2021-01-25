@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 // import logo from "./logo.svg";
 // import { Button, TextField } from "@material-ui/core";
 // import { Responsive, WidthProvider } from "react-grid-layout";
-import { useDebounceFn } from '@umijs/hooks';
+import { useDebounceFn, useUnmount } from '@umijs/hooks';
 import lodash from 'lodash';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import { DndProvider } from 'react-dnd';
@@ -89,6 +89,8 @@ import {
 import rendererIpc from '@/utils/rendererIpc';
 import { useRecoilState } from 'recoil';
 import { editorPluginListState, PageData, pageDataState } from '@/store/atoms';
+import { useDispatch, useStore } from '@/store/reducer-provider';
+import KEYS from '@/store/keys';
 import {
   initialValueBasicMarks,
   initialValueForcedLayout,
@@ -319,8 +321,11 @@ const inlineTypes = plugins.reduce((arr, plugin) => {
 function Page({ match }) {
   const title: string = match.params.id;
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
-  const [pageData, setPageData] = useRecoilState(pageDataState);
-
+  // const [pageData, dispatch({type:KEYS.PAGE_DATA,payload:pageData})] = useRecoilState(pageDataState);
+  // const [pageData, dispatch({type:KEYS.PAGE_DATA,payload:pageData})] = useState(null);
+  const { pageData } = useStore();
+  console.log("🚀 ~ file: index.tsx ~ line 327 ~ Page ~ pageData", pageData)
+  const dispatch = useDispatch();
   // const layouts = getLayoutsFromSomewhere();
   // const decorate: any = [];
   // const [value, setValue] = useState<Node[]>([]);
@@ -395,10 +400,11 @@ function Page({ match }) {
     //  ===== 加载数据
     // TODO: 调用过程抽象
     const loadJsonHandle = (event, json) => {
+    console.log("🚀 ~ file: index.tsx ~ line 403 ~ loadJsonHandle ~ json", json)
       // TODO:可以合并减少一次render
       // setValue(json.block);
       // setMeta(json.meta);
-      setPageData(json);
+      dispatch({ type: KEYS.PAGE_DATA, payload: json });
     };
     rendererIpc.sendToMain('loadFileJson', title);
     rendererIpc.receiveFromMain.addListener('loadFileJson', loadJsonHandle);
@@ -408,102 +414,109 @@ function Page({ match }) {
       rendererIpc.receiveFromMain.removeListener('extension-html', extensionHtmlHandle);
       rendererIpc.receiveFromMain.removeListener('loadFileJson', loadJsonHandle);
     };
-  }, [editor, title, setPageData]);
+  }, [editor, title, dispatch]);
 
-  useEffect(() => {}, [slatePluginList]);
+  useUnmount(() => {
+    dispatch({ type: KEYS.PAGE_DATA, payload: null });
+  });
 
   return (
     <div className="App">
       <DndProvider backend={HTML5Backend}>
-        <Slate
-          editor={editor}
-          value={pageData.block}
-          onChange={(val) => {
-            // setValue(val);
-            setPageData({
-              ...pageData,
-              block: val,
-            });
-            onChangeMention(editor);
-          }}
-        >
-          <MentionSelect at={target} valueIndex={index} options={values} />
-          <BalloonToolbar arrow>
-            <ToolbarMark
-              reversed
-              type={MARK_BOLD}
-              icon={<FormatBold />}
-              tooltip={{ content: 'Bold (⌘B)' }}
-            />
-            <ToolbarMark
-              reversed
-              type={MARK_ITALIC}
-              icon={<FormatItalic />}
-              tooltip={{ content: 'Italic (⌘I)' }}
-            />
-            <ToolbarMark
-              reversed
-              type={MARK_UNDERLINE}
-              icon={<FormatUnderlined />}
-              tooltip={{ content: 'Underline (⌘U)' }}
-            />
-            <ToolbarMark
-              reversed
-              type={MARK_CODE}
-              icon={<Code />}
-              tooltip={{ content: 'Underline (⌘U)' }}
-            />
-            <ToolbarMark
-              reversed
-              type={MARK_STRIKETHROUGH}
-              icon={<FormatStrikethrough />}
-              tooltip={{ content: 'Underline (⌘U)' }}
-            />
-            {/* <ToolbarMark
+        {pageData && (
+          <Slate
+            editor={editor}
+            value={pageData.block}
+            onChange={(val) => {
+              // setValue(val);
+              dispatch({
+                type: KEYS.PAGE_DATA,
+                payload: {
+                  ...pageData,
+                  block: val,
+                },
+              });
+              onChangeMention(editor);
+            }}
+          >
+            <MentionSelect at={target} valueIndex={index} options={values} />
+            <BalloonToolbar arrow>
+              <ToolbarMark
+                reversed
+                type={MARK_BOLD}
+                icon={<FormatBold />}
+                tooltip={{ content: 'Bold (⌘B)' }}
+              />
+              <ToolbarMark
+                reversed
+                type={MARK_ITALIC}
+                icon={<FormatItalic />}
+                tooltip={{ content: 'Italic (⌘I)' }}
+              />
+              <ToolbarMark
+                reversed
+                type={MARK_UNDERLINE}
+                icon={<FormatUnderlined />}
+                tooltip={{ content: 'Underline (⌘U)' }}
+              />
+              <ToolbarMark
+                reversed
+                type={MARK_CODE}
+                icon={<Code />}
+                tooltip={{ content: 'Underline (⌘U)' }}
+              />
+              <ToolbarMark
+                reversed
+                type={MARK_STRIKETHROUGH}
+                icon={<FormatStrikethrough />}
+                tooltip={{ content: 'Underline (⌘U)' }}
+              />
+              {/* <ToolbarMark
 							reversed
 							type={ELEMENT_LINK}
 							icon={<Link />}
 							tooltip={{ content: "Underline (⌘U)" }}
 						/> */}
-            <ToolbarLink
-              onMouseDown={(event) => {
-                // Object.assign
-                event.preventDefault();
-                let prevUrl = '';
-                const url = '';
-                const linkNode = getAboveByType(editor, options.link.type);
+              <ToolbarLink
+                onMouseDown={(event) => {
+                  // Object.assign
+                  event.preventDefault();
+                  let prevUrl = '';
+                  const url = '';
+                  const linkNode = getAboveByType(editor, options.link.type);
 
-                if (linkNode) {
-                  prevUrl = linkNode[0].url as string;
-                }
+                  if (linkNode) {
+                    prevUrl = linkNode[0].url as string;
+                  }
 
-                // TODO: 使用js弹窗 https://material-ui.com/zh/components/dialogs/
-                // const url = window.prompt(
-                // 	`Enter the URL of the link:`,
-                // 	prevUrl
-                // );
-                if (!url) return; // If our cursor is in middle of a link, then we don't want to inser it inline
+                  // TODO: 使用js弹窗 https://material-ui.com/zh/components/dialogs/
+                  // const url = window.prompt(
+                  // 	`Enter the URL of the link:`,
+                  // 	prevUrl
+                  // );
+                  if (!url) return; // If our cursor is in middle of a link, then we don't want to inser it inline
 
-                const shouldWrap = linkNode !== undefined && isCollapsed(editor.selection);
-                upsertLinkAtSelection(editor, url, {
-                  wrap: shouldWrap,
-                  ...options,
-                });
-              }}
-              icon={<Link />}
+                  const shouldWrap = linkNode !== undefined && isCollapsed(editor.selection);
+                  upsertLinkAtSelection(editor, url, {
+                    wrap: shouldWrap,
+                    ...options,
+                  });
+                }}
+                icon={<Link />}
+              />
+            </BalloonToolbar>
+            <EditablePlugins
+              spellCheck={false}
+              plugins={[...plugins, ...slatePluginList]}
+              renderElementDeps={[slatePluginList.length]}
+              onKeyDownDeps={[slatePluginList.length]}
+              placeholder="Enter some text..."
+              onKeyDown={onKeyDown}
+              // onKeyDownDeps={[index, mentionSearch, target]}
+              autoFocus
             />
-          </BalloonToolbar>
-          <EditablePlugins
-            spellCheck={false}
-            plugins={[...plugins, ...slatePluginList]}
-            renderElementDeps={[slatePluginList.length]}
-            onKeyDownDeps={[slatePluginList.length]}
-            placeholder="Enter some text..."
-            onKeyDown={onKeyDown}
-            // onKeyDownDeps={[index, mentionSearch, target]}
-            autoFocus
-          />
-        </Slate>
+          </Slate>
+        )}
       </DndProvider>
     </div>
   );

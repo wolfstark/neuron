@@ -25,5 +25,5 @@ export interface PageData {
 
 export const pageDataState = atom<PageData>({
   key: KEYS.PAGE_DATA,
-  default: { meta: {}, block: [] },
+  default: null,
 });

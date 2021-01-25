@@ -7,6 +7,7 @@ const { createWindow } = require('./window');
 const { watchProtocol, setDefaultProtocol } = require('./protocol');
 const mainIpc = require('./mainIpc');
 const FileSystem = require('./file-system');
+const { serialize } = require('remark-slate');
 
 Object.assign(console, log.functions);
 const nfs = FileSystem.getInstance();
@@ -91,6 +92,21 @@ mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, js
 });
 mainIpc.receiveFromRenderer.addListener('updatePlugin', async (event, plugin) => {
   await nfs.updatePlugin(plugin);
+  // const json = await nfs.loadFileJson(title);
+  // mainIpc.sendToRenderer('update-plugin-list', filelist);
+});
+mainIpc.receiveFromRenderer.addListener('exportMD', async (event, filename) => {
+  const filepath = dialog.showSaveDialogSync({
+    defaultPath: filename + '.md',
+  });
+  if (filepath) {
+    const fileJson = await nfs.loadFileJson(filename);
+    const mdstr = fileJson.block.map((v) => serialize(v)).join('');
+    console.log(
+      '🚀 ~ file: electron.js ~ line 105 ~ mainIpc.receiveFromRenderer.addListener ~ mdstr',
+      mdstr,
+    );
+  }
   // const json = await nfs.loadFileJson(title);
   // mainIpc.sendToRenderer('update-plugin-list', filelist);
 });

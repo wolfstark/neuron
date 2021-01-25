@@ -5,6 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import rendererIpc from '@/utils/rendererIpc';
 import { useRecoilState } from 'recoil';
 import { pageDataState } from '@/store/atoms';
+import { useStore } from '@/store/reducer-provider';
 
 const useStyles = makeStyles({
   root: {
@@ -14,12 +15,11 @@ const useStyles = makeStyles({
 
 export default function ExportBtn(props) {
   const classes = useStyles(props);
-  const [pageData, setPageData] = useRecoilState(pageDataState);
+  // const [pageData, setPageData] = useRecoilState(pageDataState);
+  const { pageData } = useStore();
+
   const handleExportMD = () => {
-    rendererIpc.sendToMain('exportMD', {
-      // meta,
-      // block: value,
-    });
+    rendererIpc.sendToMain('exportMD', pageData.meta.filename);
   };
   return (
     <div>

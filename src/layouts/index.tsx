@@ -28,6 +28,7 @@ import TheSearch from './search';
 import PluginPackage from '@/utils/plugin-package';
 import Api from '@/utils/api';
 import ExportBtn from './exportBtn';
+import { StoreProvider } from '@/store/reducer-provider';
 
 const drawerWidth = 240;
 
@@ -266,9 +267,11 @@ function Layout({ children }) {
 }
 export default function RecoilWrapper({ children }) {
   return (
-    <RecoilRoot>
-      <DebugObserver />
-      <Layout>{children}</Layout>
-    </RecoilRoot>
+    <StoreProvider>
+      <RecoilRoot>
+        <DebugObserver />
+        <Layout>{children}</Layout>
+      </RecoilRoot>
+    </StoreProvider>
   );
 }
