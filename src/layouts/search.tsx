@@ -62,8 +62,15 @@ export default function TheSearch() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterList, setFilterList] = useState([]);
   const [inputVal, setInputVal] = useState('');
-
   const [fileList, setFileList] = useRecoilState(fileListState);
+
+  const isCommandMode = inputVal.startsWith('>');
+  const commandName = (() => {
+    if (isCommandMode) {
+      return inputVal.slice(1).trim();
+    }
+    return '';
+  })();
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setAnchorEl(event.currentTarget);
@@ -83,6 +90,7 @@ export default function TheSearch() {
     rendererIpc.sendToMain('new-page', inputVal);
     setInputVal('');
   };
+  const commandList = [3, 4, 1];
 
   return (
     <div className={classes.search}>
@@ -98,9 +106,6 @@ export default function TheSearch() {
           root: classes.inputRoot,
           input: classes.inputInput,
         }}
-        inputProps={{
-          'aria-label': 'search',
-        }}
       />
       {inputVal && (
         <Popper
@@ -113,22 +118,35 @@ export default function TheSearch() {
           {({ TransitionProps }) => (
             <Fade {...TransitionProps} timeout={350}>
               <Paper>
-                <List>
-                  <ListItem button key="new" onClick={newPage}>
-                    <ListItemText
-                      primary={`新建页面：'${inputVal}'`}
-                      // secondary={secondary ? 'Secondary text' : null}
-                    />
-                  </ListItem>
-                  {filterList.map((file) => (
-                    <ListItem key={file.title} button>
+                {isCommandMode ? (
+                  <List>
+                    {commandList.map((file) => (
+                      <ListItem key={file} button>
+                        <ListItemText
+                          primary={file}
+                          // secondary={secondary ? 'Secondary text' : null}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <List>
+                    <ListItem button key="new" onClick={newPage}>
                       <ListItemText
-                        primary={file.title}
+                        primary={`新建页面：'${inputVal}'`}
                         // secondary={secondary ? 'Secondary text' : null}
                       />
                     </ListItem>
-                  ))}
-                </List>
+                    {filterList.map((file) => (
+                      <ListItem key={file.title} button>
+                        <ListItemText
+                          primary={file.title}
+                          // secondary={secondary ? 'Secondary text' : null}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
               </Paper>
             </Fade>
           )}
