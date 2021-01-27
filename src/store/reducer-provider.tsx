@@ -1,23 +1,22 @@
 import React, { createContext, useReducer, useContext } from 'react';
+import { createReducer } from '@reduxjs/toolkit';
 import KEYS from './keys';
 
 const defaultState = {
   pageData: null,
+  userConfig: null,
 };
 
-interface Action {
-  type: string;
-  payload: object;
-}
+// interface Action {
+//   type: string;
+//   payload: object;
+// }
 
-function reducer(state = defaultState, action: Action) {
-  switch (action.type) {
-    case KEYS.PAGE_DATA:
-      return { ...state, pageData: action.payload };
-    default:
-      return state;
-  }
-}
+const reducer = createReducer(defaultState, {
+  [KEYS.PAGE_DATA]: (state, action) => ({ ...state, pageData: action.payload }),
+  [KEYS.USER_CONFIG]: (state, action) => ({ ...state, userConfig: action.payload }),
+});
+
 const DispatchContext = createContext(null);
 const StoreContext = createContext(null);
 

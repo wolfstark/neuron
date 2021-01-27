@@ -23,12 +23,21 @@ import { NavLink } from 'umi';
 import { LinkProps } from 'react-router-dom';
 import { RecoilRoot, useRecoilState, useRecoilSnapshot } from 'recoil';
 import rendererIpc from '@/utils/rendererIpc';
-import { editorPluginListState, fileListState, pluginListState } from '@/store/atoms';
+import {
+  editorPluginListState,
+  fileListState,
+  pluginListState,
+  commandPluginListState,
+} from '@/store/atoms';
 import TheSearch from './search';
 import PluginPackage from '@/utils/plugin-package';
 import Api from '@/utils/api';
 import ExportBtn from './exportBtn';
 import { StoreProvider } from '@/store/reducer-provider';
+import UserConfig from '@/utils/UserConfig';
+import { useStore, useDispatch } from '@/store/reducer-provider';
+import { types } from 'util';
+import KEYS from '@/store/keys';
 
 const drawerWidth = 240;
 
@@ -138,17 +147,18 @@ function DebugObserver() {
 
 function Layout({ children }) {
   const classes = useStyles();
-  const theme = useTheme();
+  // const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [fileList, setFileList] = useRecoilState(fileListState);
   const [pluginList, setPluginList] = useRecoilState(pluginListState);
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
-  const [boostList, setBoostList] = useState([]);
+  const [commandList, setCommandList] = useRecoilState(commandPluginListState);
+  // const [boostList, setBoostList] = useState([]);
+  const { userConfig } = useStore();
+  // const userConfig = new UserConfig();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const updatelistHandle = (e, filelist) => {
-      setFileList(filelist);
-    };
     const updatePluginHandle = (e, pluginlist) => {
       const pluginPackageList = [...pluginList];
       const uninstallPlugins = [];
@@ -158,7 +168,11 @@ function Layout({ children }) {
         });
         if (index > -1) {
           const targetPluginPackage: PluginPackage = pluginList[index];
-          const pluginPackage = new PluginPackage(pluginConfig, targetPluginPackage.getApi());
+          const pluginPackage = new PluginPackage(
+            pluginConfig,
+            targetPluginPackage.getApi(),
+            userConfig,
+          );
 
           if (!pluginConfig.pkg.enable && targetPluginPackage.config.pkg.enable) {
             pluginPackageList.splice(index, 1, pluginPackage);
@@ -167,31 +181,44 @@ function Layout({ children }) {
           }
           // todo sometings
         } else {
-          uninstallPlugins.push(new PluginPackage(pluginConfig, new Api(setSlatePluginList)));
+          uninstallPlugins.push(
+            new PluginPackage(
+              pluginConfig,
+              new Api(setSlatePluginList, setCommandList),
+              userConfig,
+            ),
+          );
         }
       });
-      // const uninstallPlugins.map((config)=>{
-      //   new PluginPackage(config)
-      // })
       setPluginList([...pluginPackageList, ...uninstallPlugins]);
     };
-    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
     rendererIpc.receiveFromMain.addListener('update-plugin-list', updatePluginHandle);
     return () => {
-      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
       rendererIpc.receiveFromMain.removeListener('update-plugin-list', updatePluginHandle);
     };
-  }, [setFileList, setPluginList, pluginList, setSlatePluginList]);
+  }, [setPluginList, pluginList, userConfig, setSlatePluginList, setCommandList]);
 
-  // useEffect(() => {
-  //   pluginList.forEach((item) => {
-  //     if (item.pkg.enable) {
-  //       // window.require('');
-  //       const module = window.require(item.scriptPath);
-  //       console.log('🚀 ~ file: index.tsx ~ line 162 ~ pluginList.forEach ~ module', module);
-  //     }
-  //   });
-  // }, [pluginList]);
+  useEffect(() => {
+    const updatelistHandle = (e, filelist) => {
+      setFileList(filelist);
+    };
+    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
+
+    return () => {
+      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
+    };
+  }, [setFileList]);
+
+  useEffect(() => {
+    const updateSettingHandle = (e, setting) => {
+      dispatch({ type: KEYS.USER_CONFIG, payload: new UserConfig(setting) });
+    };
+    rendererIpc.receiveFromMain.addListener('update-setting', updateSettingHandle);
+
+    return () => {
+      rendererIpc.receiveFromMain.removeListener('update-setting', updateSettingHandle);
+    };
+  }, [dispatch]);
 
   const handleDrawerOpen = () => {
     setOpen(true);

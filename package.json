@@ -31,10 +31,11 @@
 		"lint:js": "eslint --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src",
 		"lint:prettier": "prettier --check \"src/**/*\" --end-of-line auto",
 		"lint:style": "stylelint --fix \"src/**/*.less\" --syntax less"
-  },
-  "dependencies": {
+	},
+	"dependencies": {
 		"@material-ui/core": "^4.11.2",
 		"@material-ui/icons": "^4.11.2",
+		"@reduxjs/toolkit": "^1.5.0",
 		"@types/node": "^12.19.9",
 		"@types/react": "^17.0.0",
 		"@types/react-dom": "^17.0.0",

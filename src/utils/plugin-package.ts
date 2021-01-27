@@ -1,11 +1,11 @@
-import lodash from 'lodash';
 import Api from './api';
 import rendererIpc from './rendererIpc';
+import UserConfig from './UserConfig';
 
 class PluginPackage {
   private clearPlugin;
 
-  constructor(public config, private api: Api) {
+  constructor(public config, private api: Api, private userConfig: UserConfig) {
     if (config.pkg.enable) {
       this.boost();
     }
@@ -18,14 +18,12 @@ class PluginPackage {
   boost() {
     const module = window.require(this.config.scriptPath);
     // @ts-ignore
-    this.clearPlugin = module(this.api);
-    console.log('🚀 ~ file: plugin-package.ts ~ line 23 ~ PluginPackage ~ boost', this.config);
+    this.clearPlugin = module(this.api, this.userConfig);
   }
 
   destory() {
     this.api.destory();
     if (this.clearPlugin) this.clearPlugin();
-    console.log('🚀 ~ file: plugin-package.ts ~ line 29 ~ PluginPackage ~ destory', this.config);
   }
 
   isSame(config) {

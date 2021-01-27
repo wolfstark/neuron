@@ -51,6 +51,9 @@ mainIpc.receiveFromRenderer.addListener('getLocalfile', (event, title) => {
   nfs.loadPluginList().then((list) => {
     mainIpc.sendToRenderer('update-plugin-list', list);
   });
+  nfs.loadConfigJson().then((setting) => {
+    mainIpc.sendToRenderer('update-setting', setting);
+  });
 });
 nfs.event.on('afterCreateFile', (filelist) => {
   mainIpc.sendToRenderer('update-file-list', filelist);
@@ -67,6 +70,10 @@ mainIpc.receiveFromRenderer.addListener('loadFileJson', async (event, title) => 
 
 mainIpc.receiveFromRenderer.addListener('modifyFileJson', async (event, title, json) => {
   await nfs.modifyFileJson(title, json);
+});
+
+mainIpc.receiveFromRenderer.addListener('updateConfigJson', async (event, json) => {
+  await nfs.updateConfigJson(json);
 });
 
 mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, json) => {

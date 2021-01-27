@@ -15,6 +15,11 @@ export const editorPluginListState = atom({
   default: [],
 });
 
+export const commandPluginListState = atom({
+  key: KEYS.COMMAND_PLUGIN_LIST,
+  default: [],
+});
+
 export interface PageData {
   meta: {
     title?: string;

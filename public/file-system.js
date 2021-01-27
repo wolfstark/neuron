@@ -4,6 +4,8 @@ const { app, dialog } = require('electron');
 const PageConfig = require('./PageConfig');
 const filenamify = require('filenamify');
 const EventEmitter = require('events');
+const { defaultUserSetting } = require('./defaultConfig');
+const lodash = require('lodash');
 
 class FileSystem {
   static instance = null;
@@ -18,8 +20,42 @@ class FileSystem {
     this.storepath = storepath;
     this.docpath = path.resolve(storepath, 'pages');
     this.pluginpath = path.resolve(storepath, 'plugins');
+    this.configpath = path.resolve(storepath, 'config');
+    this.configFilePath = path.resolve(this.configpath, 'config.json');
   }
+  async exists(filepath) {
+    let res = true;
+    try {
+      await fs.access(filepath, fs.constants.F_OK);
+    } catch (error) {
+      res = false;
+    }
+    return res;
+  }
+  async loadConfigJson() {
+    try {
+      await fs.ensureDir(this.configpath);
+      const isExists = await this.exists(this.configFilePath);
+      if (isExists) {
+        const settingStr = await fs.readFile(this.configFilePath, 'utf-8');
+        const userSetting = JSON.parse(settingStr);
 
+        return lodash.defaultsDeep(userSetting, defaultUserSetting);
+      } else {
+        await fs.writeFile(this.configFilePath, JSON.stringify(defaultUserSetting), 'utf-8');
+        return defaultUserSetting;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  async updateConfigJson(json) {
+    try {
+      await fs.writeFile(this.configFilePath, JSON.stringify(json), 'utf-8');
+    } catch (error) {
+      console.error(error);
+    }
+  }
   filenamify(name) {
     return filenamify(name, { replacement: '-' });
   }
