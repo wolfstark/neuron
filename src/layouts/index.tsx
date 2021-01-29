@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { makeStyles, useTheme, fade } from '@material-ui/core/styles';
+import {
+  makeStyles,
+  useTheme,
+  fade,
+  ThemeProvider,
+  createMuiTheme,
+} from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import AppBar from '@material-ui/core/AppBar';
@@ -36,10 +42,13 @@ import ExportBtn from './exportBtn';
 import { StoreProvider } from '@/store/reducer-provider';
 import UserConfig from '@/utils/UserConfig';
 import { useStore, useDispatch } from '@/store/reducer-provider';
-import { types } from 'util';
+// import '@material-ui/lab/themeAugmentation';
 import KEYS from '@/store/keys';
+import { SnackbarProvider } from '@/store/snackbar-provider';
 
 const drawerWidth = 240;
+
+const theme = createMuiTheme({});
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -150,13 +159,38 @@ function Layout({ children }) {
   // const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [fileList, setFileList] = useRecoilState(fileListState);
-  const [pluginList, setPluginList] = useRecoilState(pluginListState);
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
   const [commandList, setCommandList] = useRecoilState(commandPluginListState);
   // const [boostList, setBoostList] = useState([]);
-  const { userConfig } = useStore();
+  const { userConfig, pluginList } = useStore();
   // const userConfig = new UserConfig();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const updateSettingHandle = (e, settingStr) => {
+      if (userConfig) {
+        userConfig.updateSource(settingStr); // TODO: main进程不应该解析，因为可能会出错，交给render让用户修改
+      } else {
+        dispatch({ type: KEYS.USER_CONFIG, payload: new UserConfig(settingStr) });
+      }
+    };
+    rendererIpc.receiveFromMain.addListener('update-setting', updateSettingHandle);
+
+    return () => {
+      rendererIpc.receiveFromMain.removeListener('update-setting', updateSettingHandle);
+    };
+  }, [dispatch, userConfig]);
+
+  useEffect(() => {
+    const updatelistHandle = (e, filelist) => {
+      setFileList(filelist);
+    };
+    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
+
+    return () => {
+      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
+    };
+  }, [setFileList]);
 
   useEffect(() => {
     const updatePluginHandle = (e, pluginlist) => {
@@ -190,35 +224,22 @@ function Layout({ children }) {
           );
         }
       });
-      setPluginList([...pluginPackageList, ...uninstallPlugins]);
+      dispatch({ type: KEYS.PLUGIN_LIST, payload: [...pluginPackageList, ...uninstallPlugins] });
     };
     rendererIpc.receiveFromMain.addListener('update-plugin-list', updatePluginHandle);
     return () => {
       rendererIpc.receiveFromMain.removeListener('update-plugin-list', updatePluginHandle);
     };
-  }, [setPluginList, pluginList, userConfig, setSlatePluginList, setCommandList]);
+  }, [dispatch, pluginList, userConfig, setSlatePluginList, setCommandList]);
 
   useEffect(() => {
-    const updatelistHandle = (e, filelist) => {
-      setFileList(filelist);
-    };
-    rendererIpc.receiveFromMain.addListener('update-file-list', updatelistHandle);
-
-    return () => {
-      rendererIpc.receiveFromMain.removeListener('update-file-list', updatelistHandle);
-    };
-  }, [setFileList]);
-
+    rendererIpc.sendToMain('getLocalConfig');
+  }, []);
   useEffect(() => {
-    const updateSettingHandle = (e, setting) => {
-      dispatch({ type: KEYS.USER_CONFIG, payload: new UserConfig(setting) });
-    };
-    rendererIpc.receiveFromMain.addListener('update-setting', updateSettingHandle);
-
-    return () => {
-      rendererIpc.receiveFromMain.removeListener('update-setting', updateSettingHandle);
-    };
-  }, [dispatch]);
+    if (userConfig == null) return;
+    rendererIpc.sendToMain('getLocalfile');
+    console.log('🚀 ~ file: index.tsx ~ line 262 ~ useEffect ~ getLocalfile');
+  }, [userConfig]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -227,68 +248,68 @@ function Layout({ children }) {
   const handleDrawerClose = () => {
     setOpen(false);
   };
-
-  useEffect(() => {
-    rendererIpc.sendToMain('getLocalfile');
-  }, []);
-
   return (
     <>
       <CssBaseline />
-      <div className={classes.root}>
-        <AppBar
-          position="fixed"
-          color="default"
-          className={clsx(classes.appBar, {
-            [classes.appBarShift]: open,
-          })}
-        >
-          <Toolbar variant="dense">
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              edge="start"
-              className={clsx(classes.menuButton, open && classes.hide)}
+      <ThemeProvider theme={theme}>
+        <SnackbarProvider>
+          <div className={classes.root}>
+            <AppBar
+              position="fixed"
+              color="default"
+              className={clsx(classes.appBar, {
+                [classes.appBarShift]: open,
+              })}
             >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" className={classes.title} noWrap>
-              {/* Persistent drawer */}
-            </Typography>
-            <TheSearch />
-            <ExportBtn />
-          </Toolbar>
-        </AppBar>
-        <Drawer
-          className={classes.drawer}
-          variant="persistent"
-          anchor="left"
-          open={open}
-          classes={{
-            paper: classes.drawerPaper,
-          }}
-        >
-          <div className={classes.drawerHeader}>
-            <IconButton onClick={handleDrawerClose}>
-              <ChevronLeftIcon />
-            </IconButton>
+              <Toolbar variant="dense">
+                <IconButton
+                  color="inherit"
+                  aria-label="open drawer"
+                  onClick={handleDrawerOpen}
+                  edge="start"
+                  className={clsx(classes.menuButton, open && classes.hide)}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Typography variant="h6" className={classes.title} noWrap>
+                  {/* Persistent drawer */}
+                </Typography>
+                <TheSearch />
+                <ExportBtn />
+              </Toolbar>
+            </AppBar>
+            <Drawer
+              className={classes.drawer}
+              variant="persistent"
+              anchor="left"
+              open={open}
+              classes={{
+                paper: classes.drawerPaper,
+              }}
+            >
+              <div className={classes.drawerHeader}>
+                <IconButton onClick={handleDrawerClose}>
+                  <ChevronLeftIcon />
+                </IconButton>
+              </div>
+              <Divider />
+              <List>
+                <ListItemLink to="/list" primary="Inbox" icon={<InboxIcon />} />
+                <ListItemLink to="/plugins" primary="Plugins" icon={<InboxIcon />} />
+                <ListItemLink to="/settings" primary="Settings" icon={<InboxIcon />} />
+              </List>
+            </Drawer>
+            <main
+              className={clsx(classes.content, {
+                [classes.contentShift]: open,
+              })}
+            >
+              <div className={classes.drawerHeader} />
+              {children}
+            </main>
           </div>
-          <Divider />
-          <List>
-            <ListItemLink to="/list" primary="Inbox" icon={<InboxIcon />} />
-            <ListItemLink to="/plugins" primary="Plugins" icon={<InboxIcon />} />
-          </List>
-        </Drawer>
-        <main
-          className={clsx(classes.content, {
-            [classes.contentShift]: open,
-          })}
-        >
-          <div className={classes.drawerHeader} />
-          {children}
-        </main>
-      </div>
+        </SnackbarProvider>
+      </ThemeProvider>
     </>
   );
 }

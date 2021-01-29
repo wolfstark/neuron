@@ -1,10 +1,30 @@
+import lodash from 'lodash';
+import jsonlint from 'jsonlint-mod';
+import { defaultUserSetting } from '../../public/defaultConfig';
+
 class UserConfig {
   #config = {};
 
   private subscriptions = [];
 
-  constructor(config) {
-    this.#config = config;
+  constructor(private settingStr) {
+    this.updateSource(settingStr);
+  }
+
+  updateSource(settingStr) {
+    // TODO:readonly
+    this.settingStr = settingStr;
+    try {
+      this.#config = jsonlint.parse(settingStr);
+    } catch (error) {
+      this.#config = { ...defaultUserSetting };
+    }
+    this.subscriptions.forEach((callback) => callback());
+  }
+
+  update(options) {
+    this.#config = lodash.defaultsDeep(options, this.#config);
+    this.subscriptions.forEach((callback) => callback());
   }
 
   subscribe(callback) {
@@ -12,14 +32,14 @@ class UserConfig {
   }
 
   get(key) {
+    // TODO:readonly
     return this.#config[key];
   }
   // has
-  // inspect
 
-  update(key, val) {
-    this.#config[key] = val;
-    this.subscriptions.forEach((callback) => callback());
+  inspect() {
+    // TODO:readonly
+    return this.#config;
   }
 }
 

@@ -38,20 +38,22 @@ class FileSystem {
       const isExists = await this.exists(this.configFilePath);
       if (isExists) {
         const settingStr = await fs.readFile(this.configFilePath, 'utf-8');
-        const userSetting = JSON.parse(settingStr);
+        // const userSetting = JSON.parse(settingStr);
 
-        return lodash.defaultsDeep(userSetting, defaultUserSetting);
+        return settingStr;
       } else {
-        await fs.writeFile(this.configFilePath, JSON.stringify(defaultUserSetting), 'utf-8');
-        return defaultUserSetting;
+        const settingStr = JSON.stringify(defaultUserSetting);
+        await fs.writeFile(this.configFilePath, settingStr, 'utf-8');
+        return settingStr;
       }
     } catch (error) {
       console.error(error);
     }
   }
-  async updateConfigJson(json) {
+  async updateConfigJson(jsonstr) {
     try {
-      await fs.writeFile(this.configFilePath, JSON.stringify(json), 'utf-8');
+      await fs.writeFile(this.configFilePath, jsonstr, 'utf-8');
+      this.event.emit('afterUpdateConfig', jsonstr);
     } catch (error) {
       console.error(error);
     }

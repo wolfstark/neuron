@@ -14,6 +14,7 @@ import { useRecoilState } from 'recoil';
 import { pluginListState } from '@/store/atoms';
 import rendererIpc from '@/utils/rendererIpc';
 import PluginPackage from '@/utils/plugin-package';
+import { useStore } from '@/store/reducer-provider';
 
 const electron = window.require('electron');
 
@@ -29,7 +30,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function Page(props) {
   const classes = useStyles();
   // const [checked, setChecked] = React.useState(['wifi']);
-  const [pluginList, setPluginList] = useRecoilState<PluginPackage[]>(pluginListState);
+  const { pluginList } = useStore();
 
   // const handleToggle = (plugin: PluginPackage, checked) => {
   //   const value = plugin.config.pkg.name;
@@ -72,7 +73,6 @@ export default function Page(props) {
                 edge="end"
                 onChange={(e, checked) => plugin.toggleEnable(checked)}
                 checked={plugin.config.pkg.enable}
-                inputProps={{ 'aria-labelledby': 'switch-list-label-wifi' }}
               />
             </ListItemSecondaryAction>
           </ListItem>

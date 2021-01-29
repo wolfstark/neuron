@@ -44,15 +44,18 @@ app.on('activate', () => {
 mainIpc.receiveFromRenderer.addListener('new-page', async (event, title) => {
   await nfs.newPage(title);
 });
-mainIpc.receiveFromRenderer.addListener('getLocalfile', (event, title) => {
+mainIpc.receiveFromRenderer.addListener('getLocalConfig', (event, title) => {
+  nfs.loadConfigJson().then((settingStr) => {
+    mainIpc.sendToRenderer('update-setting', settingStr);
+  });
+  //TODO: event name的语义有点问题
   nfs.loadFileList().then((list) => {
     mainIpc.sendToRenderer('update-file-list', list);
   });
+});
+mainIpc.receiveFromRenderer.addListener('getLocalfile', (event, title) => {
   nfs.loadPluginList().then((list) => {
     mainIpc.sendToRenderer('update-plugin-list', list);
-  });
-  nfs.loadConfigJson().then((setting) => {
-    mainIpc.sendToRenderer('update-setting', setting);
   });
 });
 nfs.event.on('afterCreateFile', (filelist) => {
@@ -61,6 +64,10 @@ nfs.event.on('afterCreateFile', (filelist) => {
 
 nfs.event.on('afterInstallPlugin', (filelist) => {
   mainIpc.sendToRenderer('update-plugin-list', filelist);
+});
+
+nfs.event.on('afterUpdateConfig', (settingStr) => {
+  mainIpc.sendToRenderer('update-setting', settingStr);
 });
 
 mainIpc.receiveFromRenderer.addListener('loadFileJson', async (event, title) => {
@@ -72,8 +79,8 @@ mainIpc.receiveFromRenderer.addListener('modifyFileJson', async (event, title, j
   await nfs.modifyFileJson(title, json);
 });
 
-mainIpc.receiveFromRenderer.addListener('updateConfigJson', async (event, json) => {
-  await nfs.updateConfigJson(json);
+mainIpc.receiveFromRenderer.addListener('updateConfigJson', async (event, jsonstr) => {
+  await nfs.updateConfigJson(jsonstr);
 });
 
 mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, json) => {
