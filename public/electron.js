@@ -41,7 +41,7 @@ app.on('activate', () => {
     createWindow();
   }
 });
-mainIpc.receiveFromRenderer.addListener('new-page', async (event, title) => {
+mainIpc.receiveFromRenderer.addHandler('new-page', async (event, title) => {
   await nfs.newPage(title);
 });
 mainIpc.receiveFromRenderer.addListener('getLocalConfig', (event, title) => {
@@ -53,6 +53,13 @@ mainIpc.receiveFromRenderer.addListener('getLocalConfig', (event, title) => {
     mainIpc.sendToRenderer('update-file-list', list);
   });
 });
+
+mainIpc.receiveFromRenderer.addListener('getKeyboardStr', (event, title) => {
+  nfs.loadKeyboardJson().then((settingStr) => {
+    mainIpc.sendToRenderer('update-keyboard', settingStr);
+  });
+});
+
 mainIpc.receiveFromRenderer.addListener('getLocalfile', (event, title) => {
   nfs.loadPluginList().then((list) => {
     mainIpc.sendToRenderer('update-plugin-list', list);
@@ -70,6 +77,10 @@ nfs.event.on('afterUpdateConfig', (settingStr) => {
   mainIpc.sendToRenderer('update-setting', settingStr);
 });
 
+nfs.event.on('afterUpdateKeyboard', (settingStr) => {
+  mainIpc.sendToRenderer('update-keyboard', settingStr);
+});
+
 mainIpc.receiveFromRenderer.addListener('loadFileJson', async (event, title) => {
   const json = await nfs.loadFileJson(title);
   mainIpc.sendToRenderer('loadFileJson', json);
@@ -81,6 +92,10 @@ mainIpc.receiveFromRenderer.addListener('modifyFileJson', async (event, title, j
 
 mainIpc.receiveFromRenderer.addListener('updateConfigJson', async (event, jsonstr) => {
   await nfs.updateConfigJson(jsonstr);
+});
+
+mainIpc.receiveFromRenderer.addHandler('updateKeyboard', async (event, jsonstr) => {
+  return await nfs.updateKeyboard(jsonstr);
 });
 
 mainIpc.receiveFromRenderer.addListener('installPlugin', async (event, title, json) => {

@@ -12,5 +12,8 @@ const rendererIpc = {
   sendToMain(eventName, ...args) {
     electron.ipcRenderer.send(eventName, ...args);
   },
+  invoke(eventName, ...args) {
+    return electron.ipcRenderer.invoke(eventName, ...args);
+  },
 };
 export default rendererIpc;

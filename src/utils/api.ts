@@ -5,6 +5,14 @@ class Api {
 
   constructor(private setSlatePluginList, private setCommandList) {}
 
+  // get version () {
+  //   return require('../package.json').version
+  // }
+
+  // hasPlugin (id) {
+  //   return this.service.plugins.some(p => matchesPluginId(id, p.id))
+  // }
+
   registerEditor(editorConfig) {
     const plugin = { ...editorConfig }; // TODO: props 支持动态修改props
     plugin.id = shrotid.generate();

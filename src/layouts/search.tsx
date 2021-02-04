@@ -12,8 +12,11 @@ import { makeStyles, fade } from '@material-ui/core/styles';
 import { Search } from '@material-ui/icons';
 import React, { useEffect, useState } from 'react';
 import { useRecoilState } from 'recoil';
-import { fileListState } from '@/store/atoms';
+import { commandPluginListState, fileListState } from '@/store/atoms';
 import rendererIpc from '@/utils/rendererIpc';
+import BaseLink from '@/components/BaseLink';
+import { ListItemLink } from '@/components/ListItemLink';
+import { history } from 'umi';
 
 const useStyles = makeStyles((theme) => ({
   search: {
@@ -63,6 +66,7 @@ export default function TheSearch() {
   const [filterList, setFilterList] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const [fileList, setFileList] = useRecoilState(fileListState);
+  const [commandList, setCommandList] = useRecoilState(commandPluginListState);
 
   const isCommandMode = inputVal.startsWith('>');
   const commandName = (() => {
@@ -71,6 +75,7 @@ export default function TheSearch() {
     }
     return '';
   })();
+  const realCommandList = commandList.filter((item) => item.name.includes(commandName));
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setAnchorEl(event.currentTarget);
@@ -86,11 +91,11 @@ export default function TheSearch() {
 
   const open = Boolean(anchorEl);
 
-  const newPage = () => {
-    rendererIpc.sendToMain('new-page', inputVal);
+  const newPage = async () => {
     setInputVal('');
+    await rendererIpc.invoke('new-page', inputVal);
+    history.push(`/page/${inputVal}`);
   };
-  const commandList = [3, 4, 1];
 
   return (
     <div className={classes.search}>
@@ -108,22 +113,16 @@ export default function TheSearch() {
         }}
       />
       {inputVal && (
-        <Popper
-          open={open}
-          anchorEl={anchorEl}
-          // onClose={handleClose}
-          transition
-          placement="bottom"
-        >
+        <Popper open={open} anchorEl={anchorEl} onClose={handleClose} transition placement="bottom">
           {({ TransitionProps }) => (
             <Fade {...TransitionProps} timeout={350}>
               <Paper>
                 {isCommandMode ? (
                   <List>
-                    {commandList.map((file) => (
-                      <ListItem key={file} button>
+                    {realCommandList.map((file) => (
+                      <ListItem key={file.id} button onClick={file.callback}>
                         <ListItemText
-                          primary={file}
+                          primary={file.name}
                           // secondary={secondary ? 'Secondary text' : null}
                         />
                       </ListItem>
@@ -138,12 +137,11 @@ export default function TheSearch() {
                       />
                     </ListItem>
                     {filterList.map((file) => (
-                      <ListItem key={file.title} button>
-                        <ListItemText
-                          primary={file.title}
-                          // secondary={secondary ? 'Secondary text' : null}
-                        />
-                      </ListItem>
+                      <ListItemLink
+                        key={file.title}
+                        to={`/page/${file.title}`}
+                        primary={file.title}
+                      />
                     ))}
                   </List>
                 )}

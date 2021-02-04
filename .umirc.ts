@@ -25,6 +25,10 @@ export default defineConfig({
           path: '/settings',
           component: '@/pages/settings/index',
         },
+        {
+          path: '/keyboard',
+          component: '@/pages/keyboard/index',
+        },
       ],
     },
   ],

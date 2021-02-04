@@ -4,7 +4,7 @@ const { app, dialog } = require('electron');
 const PageConfig = require('./PageConfig');
 const filenamify = require('filenamify');
 const EventEmitter = require('events');
-const { defaultUserSetting } = require('./defaultConfig');
+const { defaultUserSetting, defaultKeyboard } = require('./defaultConfig');
 const lodash = require('lodash');
 
 class FileSystem {
@@ -22,6 +22,7 @@ class FileSystem {
     this.pluginpath = path.resolve(storepath, 'plugins');
     this.configpath = path.resolve(storepath, 'config');
     this.configFilePath = path.resolve(this.configpath, 'config.json');
+    this.keyboardPath = path.resolve(this.configpath, 'keyboard.json');
   }
   async exists(filepath) {
     let res = true;
@@ -31,6 +32,24 @@ class FileSystem {
       res = false;
     }
     return res;
+  }
+  async loadKeyboardJson() {
+    try {
+      await fs.ensureDir(this.configpath);
+      const isExists = await this.exists(this.keyboardPath);
+      if (isExists) {
+        const keyboardStr = await fs.readFile(this.keyboardPath, 'utf-8');
+        // const userSetting = JSON.parse(settingStr);
+
+        return keyboardStr;
+      } else {
+        const keyboardStr = JSON.stringify(defaultKeyboard);
+        await fs.writeFile(this.keyboardPath, keyboardStr, 'utf-8');
+        return keyboardStr;
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
   async loadConfigJson() {
     try {
@@ -54,6 +73,14 @@ class FileSystem {
     try {
       await fs.writeFile(this.configFilePath, jsonstr, 'utf-8');
       this.event.emit('afterUpdateConfig', jsonstr);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  async updateKeyboard(jsonstr) {
+    try {
+      await fs.writeFile(this.keyboardPath, jsonstr, 'utf-8');
+      this.event.emit('afterUpdateKeyboard', jsonstr);
     } catch (error) {
       console.error(error);
     }

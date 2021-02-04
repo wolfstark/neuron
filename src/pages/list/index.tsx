@@ -1,3 +1,4 @@
+import BaseLink from '@/components/BaseLink/index';
 import React from 'react';
 import { fileListState } from '@/store/atoms';
 import { makeStyles } from '@material-ui/core/styles';
@@ -12,7 +13,6 @@ import {
   TableHead,
   TableRow,
 } from '@material-ui/core';
-import { Link as UmiLink } from 'umi';
 
 const useStyles = makeStyles({
   table: {
@@ -40,9 +40,7 @@ export default function Page(props) {
             {fileList.map((row) => (
               <TableRow key={row.title}>
                 <TableCell component="th" scope="row">
-                  <Link component={UmiLink} to={`/page/${row.title}`}>
-                    {row.title}
-                  </Link>
+                  <BaseLink to={`/page/${row.title}`}>{row.title}</BaseLink>
                 </TableCell>
                 <TableCell align="right">2021-01-06 16:22:50</TableCell>
               </TableRow>
