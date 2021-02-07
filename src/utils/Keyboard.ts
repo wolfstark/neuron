@@ -14,7 +14,7 @@ class Keyboard {
     // TODO:readonly
     this.settingStr = settingStr;
     try {
-      this.#config = JSON.parse(settingStr);
+      this.#config = { ...defaultKeyboard, ...JSON.parse(settingStr) };
     } catch (error) {
       this.#config = { ...defaultKeyboard };
     }

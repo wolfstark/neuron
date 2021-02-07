@@ -3,7 +3,7 @@ import shrotid from 'short-uuid';
 class Api {
   #ids = [];
 
-  constructor(private setSlatePluginList, private setCommandList) {}
+  constructor(private setSlatePluginList, private setCommandList, private setConfigSchemaList) {}
 
   // get version () {
   //   return require('../package.json').version
@@ -28,9 +28,16 @@ class Api {
     this.setCommandList((oldList) => [...oldList, plugin]);
   }
 
+  registerConfigSchema(schema) {
+    const schemaConfig = { ...schema }; // TODO: props 支持动态修改props
+    schemaConfig.id = shrotid.generate();
+    this.#ids.push(schemaConfig.id);
+    this.setConfigSchemaList((oldList) => [...oldList, schemaConfig]);
+  }
+
   // registerMenu() {}
   destory() {
-    ['setSlatePluginList', 'setCommandList'].forEach((method) => {
+    ['setSlatePluginList', 'setCommandList', 'registerConfigSchema'].forEach((method) => {
       this[method]((oldList) => {
         const list = [...oldList];
         this.#ids.forEach((id) => {

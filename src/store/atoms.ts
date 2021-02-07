@@ -20,6 +20,11 @@ export const commandPluginListState = atom({
   default: [],
 });
 
+export const configSchemaListState = atom({
+  key: KEYS.CONFIG_SCHEMA_LIST,
+  default: [],
+});
+
 export interface PageData {
   meta: {
     title?: string;

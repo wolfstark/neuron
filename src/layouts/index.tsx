@@ -29,6 +29,7 @@ import {
   fileListState,
   pluginListState,
   commandPluginListState,
+  configSchemaListState,
 } from '@/store/atoms';
 import TheSearch from './search';
 import PluginPackage from '@/utils/plugin-package';
@@ -137,25 +138,35 @@ function Layout({ children }) {
   const [fileList, setFileList] = useRecoilState(fileListState);
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
   const [commandList, setCommandList] = useRecoilState(commandPluginListState);
+  const [configSchemaList, setConfigSchemaList] = useRecoilState(configSchemaListState);
+  const [settingStr, setSettingStr] = useState('{}');
+
   // const [boostList, setBoostList] = useState([]);
   const { userConfig, pluginList, userKeyboard } = useStore();
   // const userConfig = new UserConfig();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const updateSettingHandle = (e, settingStr) => {
-      if (userConfig) {
-        userConfig.updateSource(settingStr); // TODO: main进程不应该解析，因为可能会出错，交给render让用户修改
-      } else {
-        dispatch({ type: KEYS.USER_CONFIG, payload: new UserConfig(settingStr) });
-      }
+    if (userConfig) {
+      userConfig.updateSource(settingStr, configSchemaList);
+    } else {
+      // 插件变动时，config需要重新计算
+      dispatch({ type: KEYS.USER_CONFIG, payload: new UserConfig(settingStr, configSchemaList) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configSchemaList, settingStr]);
+
+  useEffect(() => {
+    // TODO: config的计算来自两个依赖，1.用户设置，2.configSchma，当前只在用户设置变更时计算
+    const updateSettingHandle = (e, _settingStr) => {
+      setSettingStr(_settingStr);
     };
     rendererIpc.receiveFromMain.addListener('update-setting', updateSettingHandle);
 
     return () => {
       rendererIpc.receiveFromMain.removeListener('update-setting', updateSettingHandle);
     };
-  }, [dispatch, userConfig]);
+  }, []);
 
   useEffect(() => {
     const updateSettingHandle = (e, keyboardStr) => {
@@ -209,7 +220,7 @@ function Layout({ children }) {
           uninstallPlugins.push(
             new PluginPackage(
               pluginConfig,
-              new Api(setSlatePluginList, setCommandList),
+              new Api(setSlatePluginList, setCommandList, setConfigSchemaList),
               userConfig,
             ),
           );
@@ -221,7 +232,7 @@ function Layout({ children }) {
     return () => {
       rendererIpc.receiveFromMain.removeListener('update-plugin-list', updatePluginHandle);
     };
-  }, [dispatch, pluginList, userConfig, setSlatePluginList, setCommandList]);
+  }, [dispatch, pluginList, setCommandList, setConfigSchemaList, setSlatePluginList, userConfig]);
 
   useEffect(() => {
     rendererIpc.sendToMain('getLocalConfig');
