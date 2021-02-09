@@ -27,22 +27,21 @@ import rendererIpc from '@/utils/rendererIpc';
 import {
   editorPluginListState,
   fileListState,
-  pluginListState,
+  keybindingListState,
   commandPluginListState,
   configSchemaListState,
 } from '@/store/atoms';
-import TheSearch from './search';
 import PluginPackage from '@/utils/plugin-package';
 import Api from '@/utils/api';
-import ExportBtn from './exportBtn';
-import { StoreProvider } from '@/store/reducer-provider';
 import UserConfig from '@/utils/UserConfig';
-import { useStore, useDispatch } from '@/store/reducer-provider';
-// import '@material-ui/lab/themeAugmentation';
 import KEYS from '@/store/keys';
-import { SnackbarProvider } from '@/store/snackbar-provider';
-import { ListItemLink } from '../components/ListItemLink';
 import Keyboard from '@/utils/Keyboard';
+import { SnackbarProvider } from '@/store/snackbar-provider';
+import { StoreProvider, useStore, useDispatch } from '@/store/reducer-provider';
+import TheSearch from './search';
+import ExportBtn from './exportBtn';
+// import '@material-ui/lab/themeAugmentation';
+import { ListItemLink } from '../components/ListItemLink';
 
 const drawerWidth = 240;
 
@@ -139,7 +138,9 @@ function Layout({ children }) {
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
   const [commandList, setCommandList] = useRecoilState(commandPluginListState);
   const [configSchemaList, setConfigSchemaList] = useRecoilState(configSchemaListState);
+  const [keybindingList, setKeybindingList] = useRecoilState(keybindingListState);
   const [settingStr, setSettingStr] = useState('{}');
+  const [keyboardStr, setKeyboardStr] = useState('{}');
 
   // const [boostList, setBoostList] = useState([]);
   const { userConfig, pluginList, userKeyboard } = useStore();
@@ -169,19 +170,28 @@ function Layout({ children }) {
   }, []);
 
   useEffect(() => {
-    const updateSettingHandle = (e, keyboardStr) => {
-      if (userKeyboard) {
-        userKeyboard.updateSource(keyboardStr); // TODO: main进程不应该解析，因为可能会出错，交给render让用户修改
-      } else {
-        dispatch({ type: KEYS.USER_KEYBOARD, payload: new Keyboard(keyboardStr) });
-      }
+    if (userKeyboard) {
+      userKeyboard.updateSource(keyboardStr, commandList, keybindingList); // TODO: main进程不应该解析，因为可能会出错，交给render让用户修改
+    } else {
+      // keyboardStr,command,keybindings
+      dispatch({
+        type: KEYS.USER_KEYBOARD,
+        payload: new Keyboard(keyboardStr, commandList, keybindingList),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keyboardStr]);
+
+  useEffect(() => {
+    const updateSettingHandle = (e, _keyboardStr) => {
+      setKeyboardStr(_keyboardStr);
     };
     rendererIpc.receiveFromMain.addListener('update-keyboard', updateSettingHandle);
 
     return () => {
       rendererIpc.receiveFromMain.removeListener('update-keyboard', updateSettingHandle);
     };
-  }, [dispatch, userKeyboard]);
+  }, []);
 
   useEffect(() => {
     const updatelistHandle = (e, filelist) => {
@@ -220,7 +230,7 @@ function Layout({ children }) {
           uninstallPlugins.push(
             new PluginPackage(
               pluginConfig,
-              new Api(setSlatePluginList, setCommandList, setConfigSchemaList),
+              new Api(setSlatePluginList, setCommandList, setConfigSchemaList, setKeybindingList),
               userConfig,
             ),
           );

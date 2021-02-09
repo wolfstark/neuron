@@ -25,6 +25,11 @@ export const configSchemaListState = atom({
   default: [],
 });
 
+export const keybindingListState = atom({
+  key: KEYS.KEYBINDING_LIST,
+  default: [],
+});
+
 export interface PageData {
   meta: {
     title?: string;

@@ -3,7 +3,12 @@ import shrotid from 'short-uuid';
 class Api {
   #ids = [];
 
-  constructor(private setSlatePluginList, private setCommandList, private setConfigSchemaList) {}
+  constructor(
+    private setSlatePluginList,
+    private setCommandList,
+    private setConfigSchemaList,
+    private setKeybindingList,
+  ) {}
 
   // get version () {
   //   return require('../package.json').version
@@ -35,18 +40,27 @@ class Api {
     this.setConfigSchemaList((oldList) => [...oldList, schemaConfig]);
   }
 
+  registerKeybinding(keybinding) {
+    const keybindingConfig = { ...keybinding }; // TODO: props 支持动态修改props
+    keybindingConfig.id = shrotid.generate();
+    this.#ids.push(keybindingConfig.id);
+    this.setKeybindingList((oldList) => [...oldList, keybindingConfig]);
+  }
+
   // registerMenu() {}
   destory() {
-    ['setSlatePluginList', 'setCommandList', 'registerConfigSchema'].forEach((method) => {
-      this[method]((oldList) => {
-        const list = [...oldList];
-        this.#ids.forEach((id) => {
-          const curIndex = list.findIndex((item) => item.id === id);
-          if (curIndex > -1) list.splice(curIndex, 1);
+    ['setSlatePluginList', 'setCommandList', 'setConfigSchemaList', 'setKeybindingList'].forEach(
+      (method) => {
+        this[method]((oldList) => {
+          const list = [...oldList];
+          this.#ids.forEach((id) => {
+            const curIndex = list.findIndex((item) => item.id === id);
+            if (curIndex > -1) list.splice(curIndex, 1);
+          });
+          return list;
         });
-        return list;
-      });
-    });
+      },
+    );
   }
 }
 export default Api;
