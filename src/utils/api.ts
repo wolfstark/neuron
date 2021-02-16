@@ -8,6 +8,7 @@ class Api {
     private setCommandList,
     private setConfigSchemaList,
     private setKeybindingList,
+    // private commands,//TODO: 和api分离
   ) {}
 
   // get version () {

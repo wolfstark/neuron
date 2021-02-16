@@ -324,7 +324,7 @@ function Page({ match }) {
   // const [pageData, dispatch({type:KEYS.PAGE_DATA,payload:pageData})] = useRecoilState(pageDataState);
   // const [pageData, dispatch({type:KEYS.PAGE_DATA,payload:pageData})] = useState(null);
   const { pageData } = useStore();
-  console.log("🚀 ~ file: index.tsx ~ line 327 ~ Page ~ pageData", pageData)
+  console.log('🚀 ~ file: index.tsx ~ line 327 ~ Page ~ pageData', pageData);
   const dispatch = useDispatch();
   // const layouts = getLayoutsFromSomewhere();
   // const decorate: any = [];
@@ -400,7 +400,7 @@ function Page({ match }) {
     //  ===== 加载数据
     // TODO: 调用过程抽象
     const loadJsonHandle = (event, json) => {
-    console.log("🚀 ~ file: index.tsx ~ line 403 ~ loadJsonHandle ~ json", json)
+      console.log('🚀 ~ file: index.tsx ~ line 403 ~ loadJsonHandle ~ json', json);
       // TODO:可以合并减少一次render
       // setValue(json.block);
       // setMeta(json.meta);
@@ -416,9 +416,15 @@ function Page({ match }) {
     };
   }, [editor, title, dispatch]);
 
-  useUnmount(() => {
-    dispatch({ type: KEYS.PAGE_DATA, payload: null });
-  });
+  useEffect(() => {
+    dispatch({ type: KEYS.EDITOR, payload: editor });
+
+    return () => {
+      dispatch({ type: KEYS.PAGE_DATA, payload: null });
+      dispatch({ type: KEYS.EDITOR, payload: null });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="App">

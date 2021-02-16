@@ -17,6 +17,7 @@ import rendererIpc from '@/utils/rendererIpc';
 import BaseLink from '@/components/BaseLink';
 import { ListItemLink } from '@/components/ListItemLink';
 import { history } from 'umi';
+import { useStore } from '@/store/reducer-provider';
 
 const useStyles = makeStyles((theme) => ({
   search: {
@@ -67,6 +68,7 @@ export default function TheSearch() {
   const [inputVal, setInputVal] = useState('');
   const [fileList, setFileList] = useRecoilState(fileListState);
   const [commandList, setCommandList] = useRecoilState(commandPluginListState);
+  const { commands } = useStore();
 
   const isCommandMode = inputVal.startsWith('>');
   const commandName = (() => {
@@ -120,7 +122,11 @@ export default function TheSearch() {
                 {isCommandMode ? (
                   <List>
                     {realCommandList.map((file) => (
-                      <ListItem key={file.id} button onClick={file.callback}>
+                      <ListItem
+                        key={file.id}
+                        button
+                        onClick={() => commands.executeCommand(file.name)}
+                      >
                         <ListItemText
                           primary={file.name}
                           // secondary={secondary ? 'Secondary text' : null}

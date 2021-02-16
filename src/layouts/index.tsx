@@ -38,6 +38,8 @@ import KEYS from '@/store/keys';
 import Keyboard from '@/utils/Keyboard';
 import { SnackbarProvider } from '@/store/snackbar-provider';
 import { StoreProvider, useStore, useDispatch } from '@/store/reducer-provider';
+import Commands from '@/utils/Commands';
+// import { useEditor } from 'slate-react';
 import TheSearch from './search';
 import ExportBtn from './exportBtn';
 // import '@material-ui/lab/themeAugmentation';
@@ -141,11 +143,20 @@ function Layout({ children }) {
   const [keybindingList, setKeybindingList] = useRecoilState(keybindingListState);
   const [settingStr, setSettingStr] = useState('{}');
   const [keyboardStr, setKeyboardStr] = useState('{}');
+  const { userConfig, pluginList, userKeyboard, commands, editor } = useStore();
+  const dispatch = useDispatch();
+  // const editor = useEditor();
 
   // const [boostList, setBoostList] = useState([]);
-  const { userConfig, pluginList, userKeyboard } = useStore();
   // const userConfig = new UserConfig();
-  const dispatch = useDispatch();
+  useEffect(() => {
+    if (commands) {
+      commands.updateCommand(commandList, editor);
+    } else {
+      dispatch({ type: KEYS.COMMANDS, payload: new Commands(commandList, editor) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commandList, editor]);
 
   useEffect(() => {
     if (userConfig) {
@@ -230,7 +241,13 @@ function Layout({ children }) {
           uninstallPlugins.push(
             new PluginPackage(
               pluginConfig,
-              new Api(setSlatePluginList, setCommandList, setConfigSchemaList, setKeybindingList),
+              new Api(
+                setSlatePluginList,
+                setCommandList,
+                setConfigSchemaList,
+                setKeybindingList,
+                // commands,
+              ),
               userConfig,
             ),
           );

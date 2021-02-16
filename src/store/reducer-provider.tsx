@@ -5,15 +5,19 @@ import KEYS from './keys';
 const defaultState = {
   pageData: null,
   userConfig: null,
+  commands: null,
   userKeyboard: null,
+  editor: null,
   pluginList: [],
 };
 
 const reducer = createReducer(defaultState, {
   [KEYS.PAGE_DATA]: (state, action) => ({ ...state, pageData: action.payload }),
+  [KEYS.EDITOR]: (state, action) => ({ ...state, editor: action.payload }),
   [KEYS.USER_CONFIG]: (state, action) => ({ ...state, userConfig: action.payload }),
   [KEYS.PLUGIN_LIST]: (state, action) => ({ ...state, pluginList: action.payload }),
   [KEYS.USER_KEYBOARD]: (state, action) => ({ ...state, userKeyboard: action.payload }),
+  [KEYS.COMMANDS]: (state, action) => ({ ...state, commands: action.payload }),
 });
 
 const DispatchContext = createContext(null);
