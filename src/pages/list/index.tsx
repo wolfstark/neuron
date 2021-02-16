@@ -13,6 +13,7 @@ import {
   TableHead,
   TableRow,
 } from '@material-ui/core';
+import { useStore } from '@/store/reducer-provider';
 
 const useStyles = makeStyles({
   table: {
@@ -21,7 +22,8 @@ const useStyles = makeStyles({
 });
 
 export default function Page(props) {
-  const [fileList, setFileList] = useRecoilState(fileListState);
+  const { fileList } = useStore();
+  // const [fileList, setFileList] = useRecoilState(fileListState);
   const classes = useStyles();
   return (
     <div>

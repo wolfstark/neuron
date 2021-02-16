@@ -66,9 +66,10 @@ export default function TheSearch() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterList, setFilterList] = useState([]);
   const [inputVal, setInputVal] = useState('');
-  const [fileList, setFileList] = useRecoilState(fileListState);
+  // const [fileList, setFileList] = useRecoilState(fileListState);
   const [commandList, setCommandList] = useRecoilState(commandPluginListState);
-  const { commands } = useStore();
+  const { commands, fileList } = useStore();
+  console.log('🚀 ~ file: search.tsx ~ line 72 ~ TheSearch ~ commandList', commandList);
 
   const isCommandMode = inputVal.startsWith('>');
   const commandName = (() => {

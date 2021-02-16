@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import clsx from 'clsx';
 import {
   makeStyles,
@@ -136,7 +136,7 @@ function Layout({ children }) {
   const classes = useStyles();
   // const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [fileList, setFileList] = useRecoilState(fileListState);
+  // const [fileList, setFileList] = useRecoilState(fileListState);
   const [slatePluginList, setSlatePluginList] = useRecoilState(editorPluginListState);
   const [commandList, setCommandList] = useRecoilState(commandPluginListState);
   const [configSchemaList, setConfigSchemaList] = useRecoilState(configSchemaListState);
@@ -146,7 +146,19 @@ function Layout({ children }) {
   const { userConfig, pluginList, userKeyboard, commands, editor } = useStore();
   const dispatch = useDispatch();
   // const editor = useEditor();
-
+  // const setFileList = (payload: any) => dispatch({ type: KEYS.FILE_LIST, payload });
+  const setFileList = useCallback(
+    (payload) => {
+      dispatch({ type: KEYS.FILE_LIST, payload });
+    },
+    [dispatch],
+  );
+  // const setCommandList = useCallback(
+  //   (payload) => {
+  //     dispatch({ type: KEYS.COMMAND_PLUGIN_LIST, payload });
+  //   },
+  //   [dispatch],
+  // );
   // const [boostList, setBoostList] = useState([]);
   // const userConfig = new UserConfig();
   useEffect(() => {

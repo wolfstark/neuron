@@ -17,6 +17,7 @@
 		"postinstall": "umi generate tmp",
 		"prettier": "prettier -c --write \"src/**/*\"",
 		"start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3002 && electron .\"",
+    "electron":"electron .",
 		"analyze": "source-map-explorer 'build/static/js/*.js'",
 		"react-start": "umi dev",
 		"react-build": "umi build",
