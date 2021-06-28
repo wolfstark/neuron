@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to neuron 👋</h1>
+<h1 align="center">Welcome to Neuron 👋</h1>
 <p>
   <a href="https://www.npmjs.com/package/neuron" target="_blank">
     <img alt="Version" src="https://img.shields.io/npm/v/neuron.svg">
@@ -11,7 +11,7 @@
   </a>
 </p>
 
-> 本地优先，插件化的知识管理工具
+> 本地优先，插件化的知识管理工具，VSCode + Typora = Neuron
 
 ### 🏠 [Homepage](./)
 
